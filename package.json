@@ -5,7 +5,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
     "dev:server": "cd server && npm run dev",
-    "build": "cd client && npm install && npm run build && cd ../server && npm install && npx prisma generate",
+    "build": "cd client && npm install && npm run build && cd ../server && npm install && DATABASE_URL=\"postgresql://placeholder:placeholder@localhost:5432/placeholder\" npx prisma generate",
     "start": "cd server && node index.js",
     "seed": "cd server && npm run seed",
     "migrate:deploy": "cd server && npx prisma migrate deploy",
