@@ -1,15 +1,210 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// PT Cornhole Scorer - Prisma schema
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum GameMode {
+  COMPETITIVE
+  PRACTICE
+}
+
+enum GameStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum BagColour {
+  YELLOW
+  RED
+  BLUE
+  GREEN
+}
+
+enum ThrowResult {
+  CORNHOLE
+  BOARD
+  OFF
+}
+
+enum TournamentFormat {
+  ROUND_ROBIN
+}
+
+enum TournamentStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model Player {
+  id          String   @id @default(uuid())
+  username    String   @unique
+  pinHash     String
+  isAdmin     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  gamePlayers      GamePlayer[]
+  practiceSets     PracticeSet[]
+  bagThrows        BagThrow[]
+  tournamentSeats  TournamentPlayer[]
+  matchesAsPlayer1 TournamentMatch[] @relation("MatchPlayer1")
+  matchesAsPlayer2 TournamentMatch[] @relation("MatchPlayer2")
+  matchesWon       TournamentMatch[] @relation("MatchWinner")
+}
+
+model Game {
+  id                   String     @id @default(uuid())
+  mode                 GameMode
+  status               GameStatus @default(IN_PROGRESS)
+  targetScore          Int        @default(21)
+  team1Colour          BagColour?
+  team2Colour          BagColour?
+  practiceThrowsPerSet Int?
+  practiceTag          String?
+  startingTeam         Int?
+  createdAt            DateTime   @default(now())
+  completedAt          DateTime?
+
+  players      GamePlayer[]
+  rounds       Round[]
+  practiceSets PracticeSet[]
+  bagThrows    BagThrow[]
+  result       GameResult?
+  tournamentMatch TournamentMatch?
+}
+
+model GamePlayer {
+  id        String     @id @default(uuid())
+  gameId    String
+  playerId  String
+  team      Int?
+  position  Int?
+  bagColour BagColour?
+
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, playerId])
+  @@index([gameId])
+  @@index([playerId])
+}
+
+model Round {
+  id              String   @id @default(uuid())
+  gameId          String
+  roundNumber     Int
+  team1RoundScore Int      @default(0)
+  team2RoundScore Int      @default(0)
+  netPoints       Int      @default(0)
+  scoringTeam     Int?
+  startingTeam    Int
+  throwingPair    Int      @default(1)
+  createdAt       DateTime @default(now())
+
+  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  bagThrows BagThrow[]
+
+  @@unique([gameId, roundNumber])
+  @@index([gameId])
+}
+
+model PracticeSet {
+  id        String   @id @default(uuid())
+  gameId    String
+  playerId  String
+  setNumber Int
+  tag       String?
+  createdAt DateTime @default(now())
+
+  game      Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player    Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  bagThrows BagThrow[]
+
+  @@index([gameId])
+  @@index([playerId])
+}
+
+model BagThrow {
+  id            String      @id @default(uuid())
+  gameId        String
+  playerId      String
+  roundId       String?
+  practiceSetId String?
+  throwOrder    Int
+  boardX        Float
+  boardY        Float
+  result        ThrowResult
+  points        Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player      Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  round       Round?       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  practiceSet PracticeSet? @relation(fields: [practiceSetId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@index([playerId])
+  @@index([roundId])
+  @@index([practiceSetId])
+}
+
+model GameResult {
+  gameId      String @id
+  winningTeam Int?
+  team1Score  Int
+  team2Score  Int
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model Tournament {
+  id          String           @id @default(uuid())
+  name        String?
+  format      TournamentFormat @default(ROUND_ROBIN)
+  status      TournamentStatus @default(IN_PROGRESS)
+  targetScore Int              @default(21)
+  createdAt   DateTime         @default(now())
+  completedAt DateTime?
+
+  participants TournamentPlayer[]
+  matches      TournamentMatch[]
+}
+
+model TournamentPlayer {
+  id           String @id @default(uuid())
+  tournamentId String
+  playerId     String
+  seedNumber   Int
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId])
+}
+
+model TournamentMatch {
+  id           String  @id @default(uuid())
+  tournamentId String
+  player1Id    String
+  player2Id    String
+  matchOrder   Int
+  gameId       String? @unique
+  winnerId     String?
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player1    Player     @relation("MatchPlayer1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2    Player     @relation("MatchPlayer2", fields: [player2Id], references: [id], onDelete: Cascade)
+  winner     Player?    @relation("MatchWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  game       Game?      @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@index([tournamentId])
 }
