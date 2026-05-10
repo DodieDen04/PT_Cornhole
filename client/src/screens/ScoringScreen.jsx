@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import Board from '../components/Board.jsx';
 import CornholeBurst from '../components/CornholeBurst.jsx';
+import PTLogo from '../components/PTLogo.jsx';
 import { PrimaryButton, SecondaryButton, DangerButton, GhostButton } from '../components/Button.jsx';
 import { BAG_HEX } from '../constants/colours.js';
 import { fireCornholeBurst } from '../lib/celebration.js';
@@ -42,8 +43,9 @@ export default function ScoringScreen() {
   const [game, setGame] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [showQuit, setShowQuit] = useState(false);
   const [cornholeBurst, setCornholeBurst] = useState(null);
+  const [showEndPopup, setShowEndPopup] = useState(false);
+  const [showQuit, setShowQuit] = useState(false);
 
   function celebrateCornhole(colourHex) {
     setCornholeBurst({ id: Date.now(), color: colourHex });
@@ -169,6 +171,7 @@ export default function ScoringScreen() {
         method: 'PUT',
       });
       setGame(refreshed);
+      setShowEndPopup(false);
       if (winningTeam) {
         navigate(`/game/${id}/over`, { replace: true });
       }
@@ -177,6 +180,11 @@ export default function ScoringScreen() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function popupUndo() {
+    await undo();
+    setShowEndPopup(false);
   }
 
   async function quitGame() {
@@ -205,100 +213,96 @@ export default function ScoringScreen() {
 
   const throwerPlayer = thrower ? game.players.find((gp) => gp.playerId === thrower.playerId)?.player : null;
 
+  const team1Thrown = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 1).length;
+  const team2Thrown = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 2).length;
+  const throwerTeam = thrower ? teamByPlayer[thrower.playerId] : null;
+  const throwerHex = throwerTeam === 1 ? team1Hex : throwerTeam === 2 ? team2Hex : null;
+
   return (
-    <div className="min-h-screen flex flex-col px-3 py-4 max-w-md lg:max-w-4xl mx-auto pb-20">
-      <header className="grid grid-cols-2 gap-2 mb-3">
-        <ScoreCard
+    <div
+      className="h-dvh flex flex-col px-3 max-w-md lg:max-w-4xl mx-auto"
+      style={{
+        paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+      }}
+    >
+      <header className="flex items-center justify-between mb-2">
+        <PTLogo className="h-7" />
+        <span className="text-sm uppercase tracking-wider text-[#FAEEDA]/70">
+          Round {round.roundNumber}
+        </span>
+      </header>
+
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <TeamCard
           label={team1.map((gp) => gp.player.username).join(' & ')}
           score={game.team1Score}
           colour={team1Hex}
-          highlight={thrower && teamByPlayer[thrower.playerId] === 1}
+          highlight={throwerTeam === 1}
+          thrown={team1Thrown}
         />
-        <ScoreCard
+        <TeamCard
           label={team2.map((gp) => gp.player.username).join(' & ')}
           score={game.team2Score}
           colour={team2Hex}
-          highlight={thrower && teamByPlayer[thrower.playerId] === 2}
+          highlight={throwerTeam === 2}
+          thrown={team2Thrown}
         />
-      </header>
+      </div>
 
-      <div className="text-center mb-2">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">
-          Round {round.roundNumber} &middot; Throw {Math.min(round.bagThrows.length + (allEightThrown ? 0 : 1), THROWS_PER_ROUND)} of {THROWS_PER_ROUND} &middot; Target {game.targetScore}
-        </p>
+      <div className="text-center mb-2 min-h-[24px]">
         {throwerPlayer ? (
-          <p className="text-base font-semibold mt-0.5">
+          <p className="text-sm">
+            <span className="text-[#FAEEDA]/60">Now throwing: </span>
+            <span className="font-semibold">{throwerPlayer.username}</span>
             <span
-              className="inline-block w-3 h-3 rounded-full mr-2 align-middle"
-              style={{ background: teamByPlayer[thrower.playerId] === 1 ? team1Hex : team2Hex }}
+              className="inline-block w-3 h-3 rounded-full ml-2 align-middle"
+              style={{ background: throwerHex }}
             />
-            {throwerPlayer.username}
           </p>
         ) : (
-          <p className="text-base font-semibold mt-0.5 text-[#FAEEDA]/80">All 8 bags thrown</p>
+          <p className="text-sm font-semibold text-[#FAEEDA]/80">All 8 bags thrown</p>
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-2 mb-2 px-3 py-2 rounded-xl bg-[#082F58]/60 border border-[#FAEEDA]/15">
-        <span className="text-xs uppercase tracking-wider text-[#FAEEDA]/50">Round</span>
-        <span className="text-sm font-semibold" style={{ color: team1Hex }}>
-          Team 1: {round.team1RoundScore}pts
-        </span>
-        <span className="text-[#FAEEDA]/40">|</span>
-        <span className="text-sm font-semibold" style={{ color: team2Hex }}>
-          Team 2: {round.team2RoundScore}pts
-        </span>
-      </div>
-
-      <div className="lg:grid lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-6 lg:items-start">
+      <div className="flex-1 min-h-0 flex items-center justify-center">
         <Board bags={bags} onPlace={placeBag} onMove={moveBag} disabled={busy || !thrower} />
-
-        <div className="flex flex-col">
-          <RoundPanel
-            round={round}
-            game={game}
-            team1Hex={team1Hex}
-            team2Hex={team2Hex}
-            teamByPlayer={teamByPlayer}
-            allEightThrown={allEightThrown}
-            busy={busy}
-            onConfirm={confirmRound}
-          />
-
-          <div className="mt-3">
-            <SecondaryButton
-              className="w-full"
-              disabled={busy || round.bagThrows.length === 0}
-              onClick={undo}
-            >
-              Undo last
-            </SecondaryButton>
-          </div>
-
-          <div className="mt-6 flex justify-center gap-2">
-            <GhostButton
-              onClick={() => {
-                const url = `${window.location.origin}/spectate/${id}`;
-                if (navigator.share) {
-                  navigator.share({ title: 'PT Cornhole', text: 'Watch live', url }).catch(() => {});
-                } else if (navigator.clipboard) {
-                  navigator.clipboard.writeText(url);
-                  alert('Spectator link copied');
-                } else {
-                  prompt('Spectator link', url);
-                }
-              }}
-            >
-              Spectator link
-            </GhostButton>
-            <DangerButton onClick={() => setShowQuit(true)}>Quit game</DangerButton>
-          </div>
-        </div>
       </div>
 
-      {error && <p className="text-sm text-[#EF4444] text-center mt-2">{error}</p>}
+      {error && <p className="text-xs text-[#EF4444] text-center mt-1">{error}</p>}
+
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <SecondaryButton
+          disabled={busy || round.bagThrows.length === 0 || showEndPopup}
+          onClick={undo}
+        >
+          Undo last
+        </SecondaryButton>
+        <PrimaryButton
+          disabled={busy || !allEightThrown}
+          onClick={() => setShowEndPopup(true)}
+        >
+          End round
+        </PrimaryButton>
+      </div>
 
       <CornholeBurst active={cornholeBurst?.id} color={cornholeBurst?.color} />
+
+      {showEndPopup && (
+        <EndRoundPopup
+          round={round}
+          game={game}
+          team1={team1}
+          team2={team2}
+          team1Hex={team1Hex}
+          team2Hex={team2Hex}
+          teamByPlayer={teamByPlayer}
+          busy={busy}
+          onUndo={popupUndo}
+          onConfirm={confirmRound}
+          onQuit={() => setShowQuit(true)}
+        />
+      )}
 
       {showQuit && (
         <Modal>
@@ -312,7 +316,6 @@ export default function ScoringScreen() {
           </div>
         </Modal>
       )}
-
     </div>
   );
 }
@@ -328,130 +331,183 @@ function mergeRound(game, updatedRound, totals) {
   };
 }
 
-function ScoreCard({ label, score, colour, highlight }) {
+function EndRoundPopup({
+  round,
+  game,
+  team1,
+  team2,
+  team1Hex,
+  team2Hex,
+  teamByPlayer,
+  busy,
+  onUndo,
+  onConfirm,
+  onQuit,
+}) {
+  const projectedT1 = game.team1Score + (round.scoringTeam === 1 ? round.netPoints : 0);
+  const projectedT2 = game.team2Score + (round.scoringTeam === 2 ? round.netPoints : 0);
+  const winningTeam =
+    projectedT1 >= game.targetScore ? 1 : projectedT2 >= game.targetScore ? 2 : null;
+  const team1Names = team1.map((gp) => gp.player.username).join(' & ');
+  const team2Names = team2.map((gp) => gp.player.username).join(' & ');
+
+  return (
+    <div className="fixed inset-0 bg-black/75 z-40 flex items-center justify-center p-4">
+      <div
+        className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl flex flex-col"
+        style={{ maxHeight: 'calc(100dvh - 2rem)' }}
+      >
+        <h3 className="text-base font-bold text-center mb-3">
+          {winningTeam ? `Team ${winningTeam} wins!` : `Round ${round.roundNumber} complete`}
+        </h3>
+
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <PopupScore
+            label={team1Names}
+            score={projectedT1}
+            colour={team1Hex}
+            winner={winningTeam === 1}
+          />
+          <PopupScore
+            label={team2Names}
+            score={projectedT2}
+            colour={team2Hex}
+            winner={winningTeam === 2}
+          />
+        </div>
+
+        <div className="text-center text-sm mb-3">
+          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">This round</p>
+          <p>
+            <span style={{ color: team1Hex }}>T1: {round.team1RoundScore}</span>
+            <span className="text-[#FAEEDA]/40 mx-2">|</span>
+            <span style={{ color: team2Hex }}>T2: {round.team2RoundScore}</span>
+          </p>
+          <p className="font-semibold mt-0.5">
+            {round.netPoints === 0
+              ? '= Tied (no points)'
+              : `= +${round.netPoints} to Team ${round.scoringTeam}`}
+          </p>
+        </div>
+
+        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">Bag details</p>
+        <ol className="text-sm space-y-1 mb-4 overflow-y-auto" style={{ maxHeight: '32vh' }}>
+          {round.bagThrows.map((t, i) => {
+            const team = teamByPlayer[t.playerId];
+            const hex = team === 1 ? team1Hex : team2Hex;
+            const playerName =
+              game.players.find((gp) => gp.playerId === t.playerId)?.player?.username || 'Player';
+            const label =
+              t.result === 'CORNHOLE'
+                ? 'Cornhole (3)'
+                : t.result === 'BOARD'
+                ? 'Board (1)'
+                : 'Off (0)';
+            const dim = t.result === 'OFF' ? 0.55 : 1;
+            return (
+              <li key={t.id} className="flex items-center gap-2">
+                <span className="w-5 text-right text-[#FAEEDA]/50 text-xs">{i + 1}.</span>
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: hex }} />
+                <span className="flex-1 truncate">{playerName}</span>
+                <span style={{ opacity: dim }}>{label}</span>
+              </li>
+            );
+          })}
+        </ol>
+
+        {winningTeam ? (
+          <PrimaryButton className="w-full" disabled={busy} onClick={onConfirm}>
+            {busy ? 'Finishing...' : 'Finish game'}
+          </PrimaryButton>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            <SecondaryButton disabled={busy} onClick={onUndo}>
+              Undo last
+            </SecondaryButton>
+            <PrimaryButton disabled={busy} onClick={onConfirm}>
+              {busy ? 'Saving...' : 'Next round'}
+            </PrimaryButton>
+          </div>
+        )}
+
+        <button
+          onClick={onQuit}
+          disabled={busy}
+          className="w-full mt-3 text-xs text-[#FAEEDA]/55 underline underline-offset-4 disabled:opacity-50"
+        >
+          Quit game
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PopupScore({ label, score, colour, winner }) {
   return (
     <div
       className={
-        'rounded-2xl p-3 border ' +
-        (highlight ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        'rounded-xl px-3 py-2 border ' + (winner ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
       }
-      style={{ background: 'rgba(8, 47, 88, 0.7)' }}
+      style={{
+        background: 'rgba(8, 47, 88, 0.7)',
+        boxShadow: winner ? `0 0 14px ${colour}55` : undefined,
+      }}
     >
-      <div className="flex items-center gap-2">
-        <span className="w-3 h-3 rounded-full" style={{ background: colour }} />
-        <span className="text-xs uppercase tracking-wider text-[#FAEEDA]/70 truncate">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colour }} />
+        <span className="text-[10px] uppercase tracking-wider text-[#FAEEDA]/70 truncate">
+          {label}
+        </span>
       </div>
-      <div className="text-3xl font-bold mt-1" style={{ color: colour }}>
+      <div className="text-2xl font-black mt-0.5" style={{ color: colour }}>
         {score}
       </div>
     </div>
   );
 }
 
-function RoundPanel({ round, game, team1Hex, team2Hex, teamByPlayer, allEightThrown, busy, onConfirm }) {
-  const titleClass = allEightThrown
-    ? 'text-base font-semibold text-[#FAEEDA]'
-    : 'text-xs uppercase tracking-wider text-[#FAEEDA]/60';
+function Modal({ children }) {
+  return (
+    <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl">
+        {children}
+      </div>
+    </div>
+  );
+}
 
+function TeamCard({ label, score, colour, highlight, thrown }) {
   return (
     <div
       className={
-        'mt-3 p-3 rounded-2xl bg-[#082F58] border ' +
-        (allEightThrown ? 'border-[#FAEEDA]/40' : 'border-[#FAEEDA]/15')
+        'rounded-2xl px-3 py-2 border ' +
+        (highlight ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
       }
+      style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
-      <p className={titleClass + ' mb-2'}>
-        {allEightThrown ? 'Round complete' : 'This round'}
-      </p>
-
-      {allEightThrown ? (
-        <BagByBagList
-          round={round}
-          game={game}
-          teamByPlayer={teamByPlayer}
-          team1Hex={team1Hex}
-          team2Hex={team2Hex}
-        />
-      ) : (
-        <PerTeamLive
-          round={round}
-          game={game}
-          teamByPlayer={teamByPlayer}
-          team1Hex={team1Hex}
-          team2Hex={team2Hex}
-        />
-      )}
-
-      <hr className="border-[#FAEEDA]/15 my-2" />
-      <p className="text-sm">
-        Round &mdash; T1: <strong>{round.team1RoundScore}</strong> &middot; T2:{' '}
-        <strong>{round.team2RoundScore}</strong>
-      </p>
-      <p className="text-sm font-semibold">
-        {round.netPoints === 0
-          ? 'Cancellation: tied (no points)'
-          : `Cancellation: +${round.netPoints} to Team ${round.scoringTeam}`}
-      </p>
-
-      {allEightThrown && (
-        <PrimaryButton className="w-full mt-3" disabled={busy} onClick={onConfirm}>
-          {busy ? 'Confirming...' : '✓ Confirm round'}
-        </PrimaryButton>
-      )}
-    </div>
-  );
-}
-
-function PerTeamLive({ round, game, teamByPlayer, team1Hex, team2Hex }) {
-  const t1 = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 1);
-  const t2 = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 2);
-  function renderResults(throws, hex) {
-    const map = throws.map((t) => (t.result === 'CORNHOLE' ? '3' : t.result === 'BOARD' ? '1' : '0'));
-    return (
-      <span className="text-sm">
-        <span className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-middle" style={{ background: hex }} />
-        {map.length === 0 ? <em className="text-[#FAEEDA]/50">no throws</em> : map.join(' · ')}
-      </span>
-    );
-  }
-  return (
-    <div className="flex flex-col gap-1">
-      {renderResults(t1, team1Hex)}
-      {renderResults(t2, team2Hex)}
-    </div>
-  );
-}
-
-function BagByBagList({ round, game, teamByPlayer, team1Hex, team2Hex }) {
-  return (
-    <ol className="text-sm space-y-1">
-      {round.bagThrows.map((t, i) => {
-        const team = teamByPlayer[t.playerId];
-        const hex = team === 1 ? team1Hex : team2Hex;
-        const playerName = game.players.find((gp) => gp.playerId === t.playerId)?.player?.username || 'Player';
-        const label =
-          t.result === 'CORNHOLE' ? 'Cornhole (3)' : t.result === 'BOARD' ? 'Board (1)' : 'Off (0)';
-        const labelColour =
-          t.result === 'CORNHOLE' ? '#FAEEDA' : t.result === 'BOARD' ? '#FAEEDA' : '#FAEEDA';
-        const labelOpacity = t.result === 'OFF' ? 0.55 : 1;
-        return (
-          <li key={t.id} className="flex items-center gap-2">
-            <span className="w-5 text-right text-[#FAEEDA]/50 text-xs">{i + 1}.</span>
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: hex }} />
-            <span className="flex-1 truncate">{playerName}</span>
-            <span style={{ color: labelColour, opacity: labelOpacity }}>{label}</span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function Modal({ children }) {
-  return (
-    <div className="fixed inset-0 bg-black/70 z-40 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/20 p-5">
-        {children}
+      <div className="flex items-center gap-1.5">
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colour }} />
+        <span className="text-[10px] uppercase tracking-wider text-[#FAEEDA]/70 truncate">
+          {label}
+        </span>
+      </div>
+      <div
+        className="text-3xl sm:text-4xl font-black leading-tight mt-0.5"
+        style={{ color: colour }}
+      >
+        {score}
+      </div>
+      <div className="flex gap-1 mt-1">
+        {[0, 1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className="w-2.5 h-2.5 rounded-full border"
+            style={{
+              background: i < thrown ? colour : 'transparent',
+              borderColor: colour,
+            }}
+          />
+        ))}
       </div>
     </div>
   );

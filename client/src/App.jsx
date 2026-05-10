@@ -23,6 +23,10 @@ import SpectatorScreen from './screens/SpectatorScreen.jsx';
 import TournamentListScreen from './screens/TournamentListScreen.jsx';
 import TournamentSetupScreen from './screens/TournamentSetupScreen.jsx';
 import TournamentDetailScreen from './screens/TournamentDetailScreen.jsx';
+import InvitationsScreen from './screens/InvitationsScreen.jsx';
+import GroupsListScreen from './screens/GroupsListScreen.jsx';
+import GroupCreateScreen from './screens/GroupCreateScreen.jsx';
+import GroupDetailScreen from './screens/GroupDetailScreen.jsx';
 
 function RequireAuth({ children }) {
   const { player, ready } = useAuth();
@@ -175,6 +179,38 @@ function AppRoutes() {
           element={
             <RequireAuth>
               <TournamentDetailScreen />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/invitations"
+          element={
+            <RequireAuth>
+              <InvitationsScreen />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/groups"
+          element={
+            <RequireAuth>
+              <GroupsListScreen />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/groups/new"
+          element={
+            <RequireAuth>
+              <GroupCreateScreen />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/groups/:id"
+          element={
+            <RequireAuth>
+              <GroupDetailScreen />
             </RequireAuth>
           }
         />

@@ -37,7 +37,9 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Username and 4-digit PIN required' });
   }
   const player = await prisma.player.findUnique({ where: { username: username.trim() } });
-  if (!player) return res.status(401).json({ error: 'Invalid username or PIN' });
+  if (!player || !player.pinHash) {
+    return res.status(401).json({ error: 'Invalid username or PIN' });
+  }
   const ok = await bcrypt.compare(pin, player.pinHash);
   if (!ok) return res.status(401).json({ error: 'Invalid username or PIN' });
   const token = signToken(player.id);

@@ -6,6 +6,7 @@ import { GhostButton, SecondaryButton } from '../components/Button.jsx';
 import { toCsv, downloadCsv } from '../lib/csv.js';
 import Heatmap, { HeatmapLegend } from '../components/Heatmap.jsx';
 import TrendChart from '../components/TrendChart.jsx';
+import GroupFilter from '../components/GroupFilter.jsx';
 
 const MODE_FILTERS = [
   { label: 'All', value: '' },
@@ -38,12 +39,16 @@ export default function PlayerStatsScreen() {
   const [rangeDays, setRangeDays] = useState(null);
   const [opponentId, setOpponentId] = useState('');
   const [h2h, setH2h] = useState(null);
+  const [groupId, setGroupId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
+    const params = new URLSearchParams();
+    if (groupId) params.set('groupId', groupId);
+    const qs = params.toString() ? `?${params.toString()}` : '';
     Promise.all([
-      api(`/api/stats/player/${playerId}`),
+      api(`/api/stats/player/${playerId}${qs}`),
       api('/api/players'),
     ])
       .then(([s, p]) => {
@@ -52,7 +57,7 @@ export default function PlayerStatsScreen() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [playerId]);
+  }, [playerId, groupId]);
 
   useEffect(() => {
     const params = new URLSearchParams({ playerId });
@@ -62,20 +67,23 @@ export default function PlayerStatsScreen() {
       const from = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString();
       params.set('dateFrom', from);
     }
+    if (groupId) params.set('groupId', groupId);
     api(`/api/stats/heatmap?${params.toString()}`)
       .then((d) => setThrows(d.throws))
       .catch(() => setThrows([]));
-  }, [playerId, mode, resultFilter, rangeDays]);
+  }, [playerId, mode, resultFilter, rangeDays, groupId]);
 
   useEffect(() => {
     if (!opponentId) {
       setH2h(null);
       return;
     }
-    api(`/api/stats/head-to-head?player1Id=${playerId}&player2Id=${opponentId}`)
+    const params = new URLSearchParams({ player1Id: playerId, player2Id: opponentId });
+    if (groupId) params.set('groupId', groupId);
+    api(`/api/stats/head-to-head?${params.toString()}`)
       .then(setH2h)
       .catch(() => setH2h(null));
-  }, [playerId, opponentId]);
+  }, [playerId, opponentId, groupId]);
 
   const otherPlayers = useMemo(
     () => players.filter((p) => p.id !== playerId),
@@ -105,6 +113,8 @@ export default function PlayerStatsScreen() {
         </div>
         <GhostButton onClick={() => navigate('/')}>Home</GhostButton>
       </header>
+
+      <GroupFilter value={groupId} onChange={setGroupId} />
 
       <section className="mb-5">
         <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Competitive</p>

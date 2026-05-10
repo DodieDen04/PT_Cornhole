@@ -46,6 +46,10 @@ export default function SettingsScreen() {
 
       <ProfileSection player={player} flash={flash} setBusy={setBusy} busy={busy} />
 
+      <GroupsSection navigate={navigate} />
+
+      <StatsSection navigate={navigate} />
+
       <ThemeSection theme={theme} setTheme={setTheme} />
 
       {player.isAdmin && (
@@ -63,6 +67,30 @@ export default function SettingsScreen() {
         <SecondaryButton className="w-full" onClick={logout}>Logout</SecondaryButton>
       </div>
     </div>
+  );
+}
+
+function GroupsSection({ navigate }) {
+  return (
+    <section className="mb-6">
+      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">My groups</p>
+      <SecondaryButton className="w-full" onClick={() => navigate('/groups')}>
+        Manage groups
+      </SecondaryButton>
+    </section>
+  );
+}
+
+function StatsSection({ navigate }) {
+  return (
+    <section className="mb-6">
+      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Stats and history</p>
+      <div className="flex flex-col gap-2">
+        <SecondaryButton onClick={() => navigate('/history')}>History</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/stats')}>My stats</SecondaryButton>
+        <SecondaryButton onClick={() => navigate('/leaderboard')}>Leaderboard</SecondaryButton>
+      </div>
+    </section>
   );
 }
 
@@ -208,12 +236,53 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
     }
   }
 
-  async function deletePlayer(playerId, username) {
-    if (!window.confirm(`Delete ${username}? Their game data will be removed too.`)) return;
+  async function deletePlayer(player) {
+    const games = player.gamesPlayed || 0;
+    const warning =
+      games > 0
+        ? `${player.username} has ${games} game${games === 1 ? '' : 's'} of history. Delete anyway? Their game data will be removed too.`
+        : `Delete ${player.username}?`;
+    if (!window.confirm(warning)) return;
     setBusy(true);
     try {
-      await api(`/api/players/${playerId}`, { method: 'DELETE' });
+      await api(`/api/players/${player.id}`, { method: 'DELETE' });
       flash('Player deleted');
+      refreshPlayers();
+    } catch (err) {
+      flash(err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function renamePlayer(playerId, currentName) {
+    const next = window.prompt('New display name:', currentName);
+    if (next == null) return;
+    const trimmed = next.trim();
+    if (trimmed === '' || trimmed === currentName) return;
+    setBusy(true);
+    try {
+      await api(`/api/players/${playerId}`, { method: 'PUT', body: { username: trimmed } });
+      flash('Name updated');
+      refreshPlayers();
+    } catch (err) {
+      flash(err.message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function upgradeGuest(playerId, name) {
+    const pin = window.prompt(`Set a 4-digit PIN for ${name}. They can then log in.`);
+    if (!pin) return;
+    if (!/^\d{4}$/.test(pin)) {
+      flash('PIN must be 4 digits', true);
+      return;
+    }
+    setBusy(true);
+    try {
+      await api(`/api/players/${playerId}/upgrade`, { method: 'POST', body: { pin } });
+      flash(`${name} upgraded to full account (PIN: ${pin})`);
       refreshPlayers();
     } catch (err) {
       flash(err.message, true);
@@ -266,37 +335,63 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
           {players.map((p) => (
             <li key={p.id} className="p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">
-                  {p.username}
+                <span className="font-medium flex items-center gap-2 flex-wrap">
+                  <span>{p.username}</span>
                   {p.isAdmin && (
-                    <span className="ml-2 text-[10px] uppercase tracking-wider text-[#FFD700]">Admin</span>
+                    <span className="text-[10px] uppercase tracking-wider text-[#FFD700]">Admin</span>
+                  )}
+                  {p.isGuest && (
+                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#FAEEDA]/15 text-[#FAEEDA]/80 border border-[#FAEEDA]/30">
+                      Guest
+                    </span>
                   )}
                   {p.id === self.id && (
-                    <span className="ml-2 text-xs text-[#FAEEDA]/60">(you)</span>
+                    <span className="text-xs text-[#FAEEDA]/60">(you)</span>
                   )}
                 </span>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <button
-                  disabled={busy}
-                  onClick={() => resetPlayerPin(p.id)}
-                  className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
-                >
-                  Reset PIN
-                </button>
-                {!p.isAdmin && (
-                  <button
-                    disabled={busy}
-                    onClick={() => makeAdmin(p.id)}
-                    className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
-                  >
-                    Make admin
-                  </button>
+                {p.isGuest ? (
+                  <>
+                    <button
+                      disabled={busy}
+                      onClick={() => renamePlayer(p.id, p.username)}
+                      className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                    >
+                      Rename
+                    </button>
+                    <button
+                      disabled={busy}
+                      onClick={() => upgradeGuest(p.id, p.username)}
+                      className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                    >
+                      Upgrade to full account
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      disabled={busy}
+                      onClick={() => resetPlayerPin(p.id)}
+                      className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                    >
+                      Reset PIN
+                    </button>
+                    {!p.isAdmin && (
+                      <button
+                        disabled={busy}
+                        onClick={() => makeAdmin(p.id)}
+                        className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                      >
+                        Make admin
+                      </button>
+                    )}
+                  </>
                 )}
                 {p.id !== self.id && (
                   <button
                     disabled={busy}
-                    onClick={() => deletePlayer(p.id, p.username)}
+                    onClick={() => deletePlayer(p)}
                     className="min-h-[36px] px-3 rounded-lg text-xs bg-[#7F1D1D]/80"
                   >
                     Delete

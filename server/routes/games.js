@@ -42,9 +42,23 @@ async function loadGameDetail(gameId) {
   return { ...game, ...totals };
 }
 
+async function validateGroupId(groupId, playerId) {
+  if (!groupId) return { ok: true, groupId: null };
+  const membership = await prisma.groupMember.findUnique({
+    where: { groupId_playerId: { groupId, playerId } },
+  });
+  if (!membership || membership.status !== 'MEMBER') {
+    return { ok: false, error: 'Not a member of that group' };
+  }
+  return { ok: true, groupId };
+}
+
 router.post('/', authenticate, async (req, res) => {
   const body = req.body || {};
   const { mode } = body;
+
+  const groupCheck = await validateGroupId(body.groupId, req.player.id);
+  if (!groupCheck.ok) return res.status(400).json({ error: groupCheck.error });
 
   if (mode === 'COMPETITIVE') {
     const { players, team1Colour, team2Colour, targetScore } = body;
@@ -83,6 +97,7 @@ router.post('/', authenticate, async (req, res) => {
         team1Colour,
         team2Colour,
         startingTeam: 1,
+        groupId: groupCheck.groupId,
         players: {
           create: players.map((p) => ({
             playerId: p.playerId,
@@ -121,6 +136,7 @@ router.post('/', authenticate, async (req, res) => {
       data: {
         mode: 'PRACTICE',
         status: 'IN_PROGRESS',
+        groupId: groupCheck.groupId,
         practiceThrowsPerSet: throwsPerSet,
         practiceTag: tag || null,
         players: {

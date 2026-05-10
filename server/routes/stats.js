@@ -9,12 +9,13 @@ function pct(n, total) {
   return Math.round((n / total) * 1000) / 10;
 }
 
-async function loadPlayerCompetitiveGames(playerId) {
+async function loadPlayerCompetitiveGames(playerId, groupId) {
   return prisma.game.findMany({
     where: {
       mode: 'COMPETITIVE',
       status: 'COMPLETED',
       players: { some: { playerId } },
+      ...(groupId ? { groupId } : {}),
     },
     orderBy: { completedAt: 'desc' },
     include: {
@@ -27,10 +28,11 @@ async function loadPlayerCompetitiveGames(playerId) {
 
 router.get('/player/:id', authenticate, async (req, res) => {
   const playerId = req.params.id;
+  const groupId = req.query.groupId || null;
   const player = await prisma.player.findUnique({ where: { id: playerId } });
   if (!player) return res.status(404).json({ error: 'Player not found' });
 
-  const competitiveGames = await loadPlayerCompetitiveGames(playerId);
+  const competitiveGames = await loadPlayerCompetitiveGames(playerId, groupId);
 
   let won = 0;
   let lost = 0;
@@ -154,6 +156,7 @@ router.get('/player/:id', authenticate, async (req, res) => {
       mode: 'PRACTICE',
       status: 'COMPLETED',
       players: { some: { playerId } },
+      ...(groupId ? { groupId } : {}),
     },
     orderBy: { completedAt: 'desc' },
     include: { practiceSets: { where: { playerId }, include: { bagThrows: true } } },
@@ -190,7 +193,7 @@ router.get('/player/:id', authenticate, async (req, res) => {
 });
 
 router.get('/heatmap', authenticate, async (req, res) => {
-  const { playerId, mode, dateFrom, dateTo, result } = req.query;
+  const { playerId, mode, dateFrom, dateTo, result, groupId } = req.query;
   if (!playerId) return res.status(400).json({ error: 'playerId required' });
 
   const where = { playerId };
@@ -204,6 +207,7 @@ router.get('/heatmap', authenticate, async (req, res) => {
     if (dateFrom) where.createdAt.gte = new Date(dateFrom);
     if (dateTo) where.createdAt.lte = new Date(dateTo);
   }
+  if (groupId) where.game = { groupId };
 
   const throws = await prisma.bagThrow.findMany({
     where,
@@ -216,7 +220,7 @@ router.get('/heatmap', authenticate, async (req, res) => {
 });
 
 router.get('/head-to-head', authenticate, async (req, res) => {
-  const { player1Id, player2Id } = req.query;
+  const { player1Id, player2Id, groupId } = req.query;
   if (!player1Id || !player2Id) {
     return res.status(400).json({ error: 'player1Id and player2Id required' });
   }
@@ -232,6 +236,7 @@ router.get('/head-to-head', authenticate, async (req, res) => {
         { players: { some: { playerId: player1Id } } },
         { players: { some: { playerId: player2Id } } },
       ],
+      ...(groupId ? { groupId } : {}),
     },
     include: { players: true, result: true },
   });
@@ -255,10 +260,15 @@ router.get('/head-to-head', authenticate, async (req, res) => {
 
 router.get('/leaderboard', authenticate, async (req, res) => {
   const minGames = Math.max(1, Number(req.query.minGames) || 1);
+  const groupId = req.query.groupId || null;
 
   const players = await prisma.player.findMany({ orderBy: { username: 'asc' } });
   const games = await prisma.game.findMany({
-    where: { mode: 'COMPETITIVE', status: 'COMPLETED' },
+    where: {
+      mode: 'COMPETITIVE',
+      status: 'COMPLETED',
+      ...(groupId ? { groupId } : {}),
+    },
     include: { players: true, result: true },
   });
 

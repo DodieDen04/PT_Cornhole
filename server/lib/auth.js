@@ -42,6 +42,7 @@ function publicPlayer(player) {
     id: player.id,
     username: player.username,
     isAdmin: player.isAdmin,
+    isGuest: player.isGuest || false,
     createdAt: player.createdAt,
   };
 }

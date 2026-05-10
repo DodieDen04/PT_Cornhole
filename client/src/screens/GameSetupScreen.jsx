@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { PrimaryButton, SecondaryButton, GhostButton } from '../components/Button.jsx';
+import { PrimaryButton, GhostButton } from '../components/Button.jsx';
 import { BAG_COLOURS, BAG_HEX, BAG_LABEL, getLastTeamColour, rememberTeamColours } from '../constants/colours.js';
 
 const TEAM_SIZES = [
@@ -24,47 +24,86 @@ export default function GameSetupScreen() {
   const [target, setTarget] = useState(21);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [creatingGuest, setCreatingGuest] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [activeGroupId, setActiveGroupId] = useState(null);
+  const [groupMembersCache, setGroupMembersCache] = useState({});
 
   useEffect(() => {
     api('/api/players').then((d) => setPlayers(d.players)).catch(() => {});
   }, []);
 
-  function assignedTo(playerId) {
-    if (team1.includes(playerId)) return 1;
-    if (team2.includes(playerId)) return 2;
-    return null;
-  }
+  useEffect(() => {
+    api('/api/groups').then((d) => setGroups(d.groups)).catch(() => {});
+  }, []);
 
-  function toggleAssign(playerId, team) {
+  useEffect(() => {
+    if (!activeGroupId || groupMembersCache[activeGroupId]) return;
+    api(`/api/groups/${activeGroupId}`)
+      .then((d) => {
+        const ids = new Set(
+          (d.group.members || [])
+            .filter((m) => m.status === 'MEMBER')
+            .map((m) => m.playerId),
+        );
+        setGroupMembersCache((c) => ({ ...c, [activeGroupId]: ids }));
+      })
+      .catch(() => {});
+  }, [activeGroupId, groupMembersCache]);
+
+  useEffect(() => {
+    if (player && team1.length === 0 && team2.length === 0) {
+      setTeam1([player.id]);
+    }
+  }, [player, team1.length, team2.length]);
+
+  const otherPlayers = useMemo(
+    () => players.filter((p) => p.id !== player.id),
+    [players, player.id],
+  );
+  const activeGroupMemberIds =
+    activeGroupId ? groupMembersCache[activeGroupId] : null;
+  const eligibleOthers = useMemo(() => {
+    if (!activeGroupMemberIds) return otherPlayers;
+    return otherPlayers.filter((p) => activeGroupMemberIds.has(p.id));
+  }, [otherPlayers, activeGroupMemberIds]);
+  const team1Hex = BAG_HEX[team1Colour];
+  const team2Hex = BAG_HEX[team2Colour];
+
+  function toggleT1(playerId) {
     setError(null);
-    if (assignedTo(playerId) === team) {
-      if (team === 1) setTeam1((t) => t.filter((id) => id !== playerId));
-      else setTeam2((t) => t.filter((id) => id !== playerId));
+    if (team1.includes(playerId)) {
+      setTeam1((t) => t.filter((id) => id !== playerId));
       return;
     }
-    if (team === 1) {
-      if (team1.length >= teamSize) return;
+    if (team1.length >= teamSize) return;
+    setTeam2((t) => t.filter((id) => id !== playerId));
+    setTeam1((t) => [...t, playerId]);
+  }
+
+  function toggleT2(playerId) {
+    setError(null);
+    if (team2.includes(playerId)) {
       setTeam2((t) => t.filter((id) => id !== playerId));
-      setTeam1((t) => [...t, playerId]);
-    } else {
-      if (team2.length >= teamSize) return;
-      setTeam1((t) => t.filter((id) => id !== playerId));
-      setTeam2((t) => [...t, playerId]);
+      return;
     }
+    if (teamSize === 1) {
+      // 1v1: only one opponent slot, replace
+      setTeam1((t) => t.filter((id) => id !== playerId));
+      setTeam2([playerId]);
+      return;
+    }
+    if (team2.length >= teamSize) return;
+    setTeam1((t) => t.filter((id) => id !== playerId));
+    setTeam2((t) => [...t, playerId]);
   }
 
   function ready() {
     if (team1.length !== teamSize || team2.length !== teamSize) return false;
     if (team1Colour === team2Colour) return false;
     return true;
-  }
-
-  function positionFor(playerId) {
-    const i1 = team1.indexOf(playerId);
-    if (i1 !== -1) return i1 + 1;
-    const i2 = team2.indexOf(playerId);
-    if (i2 !== -1) return i2 + 1;
-    return null;
   }
 
   async function startGame() {
@@ -76,6 +115,7 @@ export default function GameSetupScreen() {
         team1Colour,
         team2Colour,
         targetScore: target,
+        groupId: activeGroupId,
         players: [
           ...team1.map((id, i) => ({ playerId: id, team: 1, position: i + 1 })),
           ...team2.map((id, i) => ({ playerId: id, team: 2, position: i + 1 })),
@@ -93,9 +133,37 @@ export default function GameSetupScreen() {
 
   function changeTeamSize(s) {
     setTeamSize(s);
-    setTeam1([]);
+    setTeam1([player.id]);
     setTeam2([]);
   }
+
+  async function createGuest() {
+    const name = guestName.trim();
+    if (!name) {
+      setError('Display name required');
+      return;
+    }
+    setCreatingGuest(true);
+    setError(null);
+    try {
+      const { player: guest } = await api('/api/players/guest', {
+        method: 'POST',
+        body: { displayName: name },
+      });
+      setPlayers((ps) => [...ps, guest].sort((a, b) => a.username.localeCompare(b.username)));
+      // Auto-select the new guest as opponent
+      toggleT2(guest.id);
+      setGuestName('');
+      setShowQuickAdd(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCreatingGuest(false);
+    }
+  }
+
+  const teammateOption = teamSize === 2 ? eligibleOthers.filter((p) => !team2.includes(p.id)) : [];
+  const opponentOptions = eligibleOthers.filter((p) => !team1.includes(p.id));
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto">
@@ -124,57 +192,122 @@ export default function GameSetupScreen() {
         </div>
       </section>
 
+      {groups.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Group</h2>
+          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+            <GroupChip
+              label="All"
+              active={activeGroupId === null}
+              onClick={() => setActiveGroupId(null)}
+            />
+            {groups.map((g) => (
+              <GroupChip
+                key={g.id}
+                label={g.name}
+                active={activeGroupId === g.id}
+                onClick={() => setActiveGroupId(g.id)}
+              />
+            ))}
+          </div>
+          {activeGroupId && (
+            <p className="text-xs text-[#FAEEDA]/60 mt-1">
+              Showing only members of this group.
+            </p>
+          )}
+        </section>
+      )}
+
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Players</h2>
-        <p className="text-xs text-[#FAEEDA]/60 mb-3">
-          Tap a player, then tap Team 1 or Team 2.
-          {teamSize === 2 && ' First player on each team throws from end A; second from end B.'}
+        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+          Your team {teamSize === 2 ? '(Team 1)' : ''}
+        </h2>
+        <PlayerCard
+          label={`${player.username} (you)`}
+          selected
+          locked
+          teamColour={team1Hex}
+        />
+        {teamSize === 2 && (
+          <div className="mt-3">
+            <p className="text-xs text-[#FAEEDA]/60 mb-2">Pick teammate:</p>
+            <div className="flex flex-col gap-2">
+              {teammateOption.length === 0 ? (
+                <p className="text-xs text-[#FAEEDA]/50 italic">No other players available.</p>
+              ) : (
+                teammateOption.map((p) => (
+                  <PlayerCard
+                    key={p.id}
+                    label={p.username}
+                    isGuest={p.isGuest}
+                    selected={team1.includes(p.id)}
+                    teamColour={team1.includes(p.id) ? team1Hex : null}
+                    onClick={() => toggleT1(p.id)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60">
+            {teamSize === 1 ? 'Opponent' : 'Opponents (Team 2)'}
+          </h2>
+          <button
+            onClick={() => setShowQuickAdd((s) => !s)}
+            className="text-xs font-semibold text-[#FAEEDA] underline underline-offset-4"
+          >
+            {showQuickAdd ? 'Cancel' : '+ Add guest'}
+          </button>
+        </div>
+        <p className="text-xs text-[#FAEEDA]/60 mb-2">
+          {teamSize === 1
+            ? 'Tap a player to choose your opponent.'
+            : 'Pick two opponents.'}
         </p>
-        <div className="flex flex-col gap-2">
-          {players.map((p) => {
-            const team = assignedTo(p.id);
-            const position = positionFor(p.id);
-            return (
-              <div
-                key={p.id}
-                className="flex items-center gap-2 p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20"
+
+        {showQuickAdd && (
+          <div className="mb-3 p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/30">
+            <p className="text-xs text-[#FAEEDA]/70 mb-2">
+              Quick add a non-registered player. They can play and accumulate stats.
+            </p>
+            <div className="flex gap-2">
+              <input
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                placeholder="Display name"
+                maxLength={30}
+                className="flex-1 min-h-[40px] px-3 rounded-lg bg-[#0C447C] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none text-sm"
+              />
+              <button
+                onClick={createGuest}
+                disabled={creatingGuest || !guestName.trim()}
+                className="min-h-[40px] px-3 rounded-lg bg-[#FAEEDA] text-[#0C447C] font-semibold text-sm disabled:opacity-50"
               >
-                <span className="flex-1 font-medium">
-                  {p.username}
-                  {p.id === player.id && (
-                    <span className="ml-2 text-xs text-[#FAEEDA]/60">(you)</span>
-                  )}
-                  {teamSize === 2 && team && position && (
-                    <span className="ml-2 text-xs text-[#FAEEDA]/70">
-                      End {position === 1 ? 'A' : 'B'}
-                    </span>
-                  )}
-                </span>
-                <button
-                  onClick={() => toggleAssign(p.id, 1)}
-                  className={
-                    'min-h-[36px] px-3 rounded-lg text-sm font-semibold ' +
-                    (team === 1
-                      ? 'bg-[#FAEEDA] text-[#0C447C]'
-                      : 'bg-[#0C447C] text-[#FAEEDA] border border-[#FAEEDA]/20')
-                  }
-                >
-                  T1
-                </button>
-                <button
-                  onClick={() => toggleAssign(p.id, 2)}
-                  className={
-                    'min-h-[36px] px-3 rounded-lg text-sm font-semibold ' +
-                    (team === 2
-                      ? 'bg-[#FAEEDA] text-[#0C447C]'
-                      : 'bg-[#0C447C] text-[#FAEEDA] border border-[#FAEEDA]/20')
-                  }
-                >
-                  T2
-                </button>
-              </div>
-            );
-          })}
+                {creatingGuest ? '...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2">
+          {opponentOptions.length === 0 ? (
+            <p className="text-xs text-[#FAEEDA]/50 italic">No other players available.</p>
+          ) : (
+            opponentOptions.map((p) => (
+              <PlayerCard
+                key={p.id}
+                label={p.username}
+                isGuest={p.isGuest}
+                selected={team2.includes(p.id)}
+                teamColour={team2.includes(p.id) ? team2Hex : null}
+                onClick={() => toggleT2(p.id)}
+              />
+            ))
+          )}
         </div>
       </section>
 
@@ -223,6 +356,78 @@ export default function GameSetupScreen() {
   );
 }
 
+function PlayerCard({ label, selected, locked, teamColour, isGuest, onClick }) {
+  const baseClasses = 'w-full px-3 py-3 rounded-xl flex items-center gap-2 text-left transition';
+  const guestBadge = isGuest ? <GuestBadge selected={selected} /> : null;
+
+  if (locked) {
+    return (
+      <div
+        className={
+          baseClasses +
+          ' bg-[#082F58] border border-[#FAEEDA]/40'
+        }
+      >
+        {teamColour && (
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: teamColour }} />
+        )}
+        <span className="font-medium flex-1 truncate">{label}</span>
+        {guestBadge}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={
+        baseClasses +
+        (selected
+          ? ' bg-[#FAEEDA] text-[#0C447C] border border-[#FAEEDA]'
+          : ' bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20 active:scale-[0.99]')
+      }
+    >
+      {teamColour && (
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: teamColour }} />
+      )}
+      <span className="font-medium flex-1 truncate">{label}</span>
+      {guestBadge}
+      {selected && <span className="text-xs uppercase tracking-wider">Selected</span>}
+    </button>
+  );
+}
+
+function GroupChip({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        'shrink-0 min-h-[36px] px-3 rounded-full text-xs font-semibold whitespace-nowrap transition ' +
+        (active
+          ? 'bg-[#FAEEDA] text-[#0C447C]'
+          : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+function GuestBadge({ selected }) {
+  return (
+    <span
+      className={
+        'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full ' +
+        (selected
+          ? 'bg-[#0C447C]/15 text-[#0C447C] border border-[#0C447C]/30'
+          : 'bg-[#FAEEDA]/15 text-[#FAEEDA]/80 border border-[#FAEEDA]/30')
+      }
+    >
+      Guest
+    </span>
+  );
+}
+
 function ColourRow({ label, value, disabled, onChange }) {
   return (
     <div className="mb-2">
@@ -238,9 +443,7 @@ function ColourRow({ label, value, disabled, onChange }) {
               disabled={isDisabled}
               className={
                 'flex-1 min-h-[44px] rounded-xl border-2 flex items-center justify-center ' +
-                (isSelected
-                  ? 'border-[#FAEEDA]'
-                  : 'border-transparent') +
+                (isSelected ? 'border-[#FAEEDA]' : 'border-transparent') +
                 (isDisabled ? ' opacity-30' : '')
               }
               style={{ background: BAG_HEX[c] }}

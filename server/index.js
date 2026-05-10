@@ -15,6 +15,8 @@ const setRoutes = require('./routes/sets');
 const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
 const tournamentRoutes = require('./routes/tournaments');
+const groupRoutes = require('./routes/groups');
+const invitationRoutes = require('./routes/invitations');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +33,8 @@ app.use('/api/throws', throwRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/groups', groupRoutes);
+app.use('/api/invitations', invitationRoutes);
 app.use('/api', setRoutes);
 
 const clientDist = path.resolve(__dirname, '..', 'client', 'dist');

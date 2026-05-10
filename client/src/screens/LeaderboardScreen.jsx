@@ -2,20 +2,24 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { GhostButton } from '../components/Button.jsx';
+import GroupFilter from '../components/GroupFilter.jsx';
 
 export default function LeaderboardScreen() {
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [minGames, setMinGames] = useState(1);
+  const [groupId, setGroupId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    api(`/api/stats/leaderboard?minGames=${minGames}`)
+    const params = new URLSearchParams({ minGames: String(minGames) });
+    if (groupId) params.set('groupId', groupId);
+    api(`/api/stats/leaderboard?${params.toString()}`)
       .then((d) => setRows(d.leaderboard))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, [minGames]);
+  }, [minGames, groupId]);
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto">
@@ -23,6 +27,8 @@ export default function LeaderboardScreen() {
         <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
         <GhostButton onClick={() => navigate('/')}>Home</GhostButton>
       </header>
+
+      <GroupFilter value={groupId} onChange={setGroupId} />
 
       <div className="flex gap-2 mb-4">
         {[1, 3, 5].map((m) => (

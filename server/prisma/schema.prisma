@@ -43,11 +43,17 @@ enum TournamentStatus {
   ABANDONED
 }
 
+enum GroupMemberStatus {
+  MEMBER
+  INVITED
+}
+
 model Player {
   id          String   @id @default(uuid())
   username    String   @unique
-  pinHash     String
+  pinHash     String?
   isAdmin     Boolean  @default(false)
+  isGuest     Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   gamePlayers      GamePlayer[]
@@ -57,6 +63,8 @@ model Player {
   matchesAsPlayer1 TournamentMatch[] @relation("MatchPlayer1")
   matchesAsPlayer2 TournamentMatch[] @relation("MatchPlayer2")
   matchesWon       TournamentMatch[] @relation("MatchWinner")
+  createdGroups    Group[]            @relation("GroupCreator")
+  groupMemberships GroupMember[]
 }
 
 model Game {
@@ -69,15 +77,19 @@ model Game {
   practiceThrowsPerSet Int?
   practiceTag          String?
   startingTeam         Int?
+  groupId              String?
   createdAt            DateTime   @default(now())
   completedAt          DateTime?
 
-  players      GamePlayer[]
-  rounds       Round[]
-  practiceSets PracticeSet[]
-  bagThrows    BagThrow[]
-  result       GameResult?
+  players         GamePlayer[]
+  rounds          Round[]
+  practiceSets    PracticeSet[]
+  bagThrows       BagThrow[]
+  result          GameResult?
   tournamentMatch TournamentMatch?
+  group           Group?           @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([groupId])
 }
 
 model GamePlayer {
@@ -207,4 +219,31 @@ model TournamentMatch {
   game       Game?      @relation(fields: [gameId], references: [id], onDelete: SetNull)
 
   @@index([tournamentId])
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdBy String
+  createdAt DateTime @default(now())
+
+  creator Player        @relation("GroupCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members GroupMember[]
+  games   Game[]
+
+  @@index([createdBy])
+}
+
+model GroupMember {
+  id       String            @id @default(uuid())
+  groupId  String
+  playerId String
+  status   GroupMemberStatus
+  addedAt  DateTime          @default(now())
+
+  group  Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, playerId])
+  @@index([playerId])
 }

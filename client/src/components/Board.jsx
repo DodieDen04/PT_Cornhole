@@ -126,7 +126,8 @@ export default function Board({ bags, onPlace, onMove, disabled }) {
     <svg
       ref={svgRef}
       viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
-      className="w-full max-w-md mx-auto block touch-none select-none"
+      preserveAspectRatio="xMidYMid meet"
+      className="block max-w-full max-h-full mx-auto touch-none select-none"
       style={{ touchAction: 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

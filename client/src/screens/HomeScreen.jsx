@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { PrimaryButton, SecondaryButton, GhostButton } from '../components/Button.jsx';
+import PTLogo from '../components/PTLogo.jsx';
 
 export default function HomeScreen() {
-  const { player, logout } = useAuth();
+  const { player } = useAuth();
   const [resumeGame, setResumeGame] = useState(null);
+  const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -14,10 +16,14 @@ export default function HomeScreen() {
     let cancelled = false;
     async function load() {
       try {
-        const { game } = await api('/api/games/in-progress');
-        if (!cancelled) setResumeGame(game);
-      } catch {
-        // ignore
+        const [gameRes, invRes] = await Promise.all([
+          api('/api/games/in-progress').catch(() => ({ game: null })),
+          api('/api/invitations').catch(() => ({ invitations: [] })),
+        ]);
+        if (!cancelled) {
+          setResumeGame(gameRes.game);
+          setInvitations(invRes.invitations || []);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -35,7 +41,7 @@ export default function HomeScreen() {
   return (
     <div className="min-h-screen flex flex-col px-5 py-6">
       <header className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">PT Cornhole</h1>
+        <PTLogo className="h-8" />
         <div className="flex items-center gap-3">
           <span className="text-sm opacity-80">{player.username}</span>
           <GhostButton onClick={() => navigate('/settings')} aria-label="Settings">⚙</GhostButton>
@@ -54,12 +60,24 @@ export default function HomeScreen() {
       )}
 
       <div className="flex flex-col gap-3 max-w-md w-full mx-auto">
-        <PrimaryButton onClick={() => navigate('/setup')}>New game</PrimaryButton>
-        <SecondaryButton onClick={() => navigate('/practice/new')}>Practice</SecondaryButton>
-        <SecondaryButton onClick={() => navigate('/tournaments')}>Tournaments</SecondaryButton>
-        <SecondaryButton onClick={() => navigate('/history')}>History</SecondaryButton>
-        <SecondaryButton onClick={() => navigate('/stats')}>My stats</SecondaryButton>
-        <SecondaryButton onClick={() => navigate('/leaderboard')}>Leaderboard</SecondaryButton>
+        <PrimaryButton onClick={() => navigate('/setup')}>Start Match</PrimaryButton>
+        <SecondaryButton onClick={() => navigate('/practice/new')}>Practice Mode</SecondaryButton>
+
+        {!loading && invitations.length > 0 && (
+          <button
+            onClick={() => navigate('/invitations')}
+            className="mt-2 p-3 rounded-2xl bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FAEEDA] text-left flex items-center gap-3"
+          >
+            <span className="w-7 h-7 rounded-full bg-[#FFD700] text-[#0C447C] font-bold text-sm flex items-center justify-center shrink-0">
+              {invitations.length}
+            </span>
+            <span className="flex-1">
+              You have {invitations.length} group invitation
+              {invitations.length === 1 ? '' : 's'}
+            </span>
+            <span className="text-[#FAEEDA]/60">›</span>
+          </button>
+        )}
       </div>
     </div>
   );

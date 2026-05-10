@@ -6,8 +6,51 @@ const { authenticate, requireAdmin, publicPlayer } = require('../lib/auth');
 const router = express.Router();
 
 router.get('/', authenticate, async (req, res) => {
-  const players = await prisma.player.findMany({ orderBy: { username: 'asc' } });
-  res.json({ players: players.map(publicPlayer) });
+  const players = await prisma.player.findMany({
+    orderBy: { username: 'asc' },
+    include: { _count: { select: { gamePlayers: true } } },
+  });
+  res.json({
+    players: players.map((p) => ({
+      ...publicPlayer(p),
+      gamesPlayed: p._count?.gamePlayers ?? 0,
+    })),
+  });
+});
+
+router.post('/guest', authenticate, async (req, res) => {
+  const { displayName } = req.body || {};
+  if (!displayName || typeof displayName !== 'string') {
+    return res.status(400).json({ error: 'Display name required' });
+  }
+  const trimmed = displayName.trim();
+  if (trimmed.length < 1 || trimmed.length > 30) {
+    return res.status(400).json({ error: 'Display name must be 1 to 30 characters' });
+  }
+  const existing = await prisma.player.findUnique({ where: { username: trimmed } });
+  if (existing) return res.status(409).json({ error: 'Name already taken' });
+
+  const player = await prisma.player.create({
+    data: { username: trimmed, pinHash: null, isGuest: true, isAdmin: false },
+  });
+  res.json({ player: publicPlayer(player) });
+});
+
+router.post('/:id/upgrade', authenticate, requireAdmin, async (req, res) => {
+  const { pin } = req.body || {};
+  if (!/^\d{4}$/.test(pin || '')) {
+    return res.status(400).json({ error: 'PIN must be 4 digits' });
+  }
+  const target = await prisma.player.findUnique({ where: { id: req.params.id } });
+  if (!target) return res.status(404).json({ error: 'Not found' });
+  if (!target.isGuest) return res.status(400).json({ error: 'Player is not a guest' });
+
+  const pinHash = await bcrypt.hash(pin, 10);
+  const updated = await prisma.player.update({
+    where: { id: target.id },
+    data: { pinHash, isGuest: false },
+  });
+  res.json({ player: publicPlayer(updated) });
 });
 
 router.get('/:id', authenticate, async (req, res) => {
