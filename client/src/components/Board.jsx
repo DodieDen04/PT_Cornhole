@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   HOLE_CENTRE_X,
   HOLE_CENTRE_Y,
@@ -14,8 +14,9 @@ import {
 } from '../constants/board.js';
 import { BAG_HEX } from '../constants/colours.js';
 
-const HOLD_MS = 200;
 const BAG_RADIUS_NORM = 0.04;
+const MOVE_COMMIT_THRESHOLD = 0.03;
+const DRAG_VIBRATE_MS = 500;
 
 function svgToNorm(svg, clientX, clientY) {
   const pt = svg.createSVGPoint();
@@ -31,15 +32,6 @@ function svgToNorm(svg, clientX, clientY) {
 export default function Board({ bags, onPlace, onMove, disabled }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null);
-  const holdTimer = useRef(null);
-  const dragStartedRef = useRef(false);
-
-  const cancelHold = useCallback(() => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-  }, []);
 
   function handlePointerDown(e) {
     if (disabled) return;
@@ -48,18 +40,19 @@ export default function Board({ bags, onPlace, onMove, disabled }) {
     if (!bagId) return;
     e.preventDefault();
     e.stopPropagation();
-    cancelHold();
-    dragStartedRef.current = false;
-    holdTimer.current = setTimeout(() => {
-      dragStartedRef.current = true;
-      const norm = svgToNorm(svgRef.current, e.clientX, e.clientY);
-      if (!norm) return;
+    const norm = svgToNorm(svgRef.current, e.clientX, e.clientY);
+    if (!norm) return;
+    try {
+      svgRef.current.setPointerCapture(e.pointerId);
+    } catch {}
+    const x = clamp01(norm.x);
+    const y = clamp01(norm.y);
+    setDrag({ bagId, startX: x, startY: y, x, y, pointerId: e.pointerId });
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try {
-        svgRef.current.setPointerCapture(e.pointerId);
+        navigator.vibrate(DRAG_VIBRATE_MS);
       } catch {}
-      setDrag({ bagId, x: clamp01(norm.x), y: clamp01(norm.y), pointerId: e.pointerId });
-      if (navigator.vibrate) navigator.vibrate(15);
-    }, HOLD_MS);
+    }
   }
 
   function handlePointerMove(e) {
@@ -71,39 +64,31 @@ export default function Board({ bags, onPlace, onMove, disabled }) {
   }
 
   function handlePointerUp(e) {
-    cancelHold();
     if (drag && drag.pointerId === e.pointerId) {
       try {
         svgRef.current.releasePointerCapture(e.pointerId);
       } catch {}
-      onMove && onMove(drag.bagId, drag.x, drag.y);
+      const dx = drag.x - drag.startX;
+      const dy = drag.y - drag.startY;
+      const moved = Math.sqrt(dx * dx + dy * dy) > MOVE_COMMIT_THRESHOLD;
+      if (moved) onMove && onMove(drag.bagId, drag.x, drag.y);
       setDrag(null);
-      dragStartedRef.current = false;
       e.preventDefault();
       e.stopPropagation();
-      return;
-    }
-    if (dragStartedRef.current) {
-      dragStartedRef.current = false;
       return;
     }
     const target = e.target;
     if (target?.getAttribute?.('data-bag-id')) return;
     const norm = svgToNorm(svgRef.current, e.clientX, e.clientY);
     if (!norm) return;
-    const x = clamp01(norm.x);
-    const y = clamp01(norm.y);
-    onPlace && onPlace(x, y);
+    onPlace && onPlace(clamp01(norm.x), clamp01(norm.y));
   }
 
   function handlePointerCancel(e) {
-    cancelHold();
     if (drag && drag.pointerId === e.pointerId) {
       setDrag(null);
     }
   }
-
-  useEffect(() => () => cancelHold(), [cancelHold]);
 
   const seenBagsRef = useRef(null);
   if (seenBagsRef.current === null) seenBagsRef.current = new Set();
@@ -204,10 +189,14 @@ export default function Board({ bags, onPlace, onMove, disabled }) {
         const isCornhole = bag.result === 'CORNHOLE' && !bag.dragging;
         const fullR = BAG_RADIUS_NORM * VIEWBOX_W;
         const radius = isCornhole ? fullR * 0.4 : fullR;
+        const groupTransform = bag.dragging
+          ? `translate(${cx} ${cy}) scale(1.3) translate(${-cx} ${-cy})`
+          : undefined;
         return (
           <g
             key={bag.id}
             data-bag-id={isCornhole ? undefined : bag.id}
+            transform={groupTransform}
             style={{
               pointerEvents: isCornhole ? 'none' : 'all',
               transition: 'opacity 280ms ease-out',
@@ -220,13 +209,13 @@ export default function Board({ bags, onPlace, onMove, disabled }) {
               cy={cy}
               r={radius}
               fill={colour}
-              stroke="#1a1a1a"
-              strokeWidth={bag.dragging ? '0.6' : '0.4'}
+              stroke={bag.dragging ? '#FAEEDA' : '#1a1a1a'}
+              strokeWidth={bag.dragging ? '0.9' : '0.4'}
               className={bag.justPlaced ? 'bag-drop-in' : undefined}
               style={{
                 transition: 'r 280ms ease-out',
                 filter: bag.dragging
-                  ? 'drop-shadow(0 0 1.5px rgba(255,255,255,0.7))'
+                  ? 'drop-shadow(0 0 3px rgba(255, 215, 0, 0.9)) drop-shadow(0 1px 2px rgba(0,0,0,0.6))'
                   : 'drop-shadow(0 0.4px 0.6px rgba(0,0,0,0.5))',
                 ['--bag-r-target']: radius,
               }}

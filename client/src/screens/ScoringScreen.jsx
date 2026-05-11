@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import Board from '../components/Board.jsx';
 import CornholeBurst from '../components/CornholeBurst.jsx';
 import PTLogo from '../components/PTLogo.jsx';
+import DragTip from '../components/DragTip.jsx';
 import { PrimaryButton, SecondaryButton, DangerButton, GhostButton } from '../components/Button.jsx';
 import { BAG_HEX } from '../constants/colours.js';
 import { fireCornholeBurst } from '../lib/celebration.js';
@@ -264,6 +265,8 @@ export default function ScoringScreen() {
           <p className="text-sm font-semibold text-[#FAEEDA]/80">All 8 bags thrown</p>
         )}
       </div>
+
+      <DragTip />
 
       <div className="flex-1 min-h-0 flex items-center justify-center">
         <Board bags={bags} onPlace={placeBag} onMove={moveBag} disabled={busy || !thrower} />
