@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { PrimaryButton, SecondaryButton, DangerButton, GhostButton } from '../components/Button.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
+import { useInstall } from '../contexts/InstallContext.jsx';
 
 export default function SettingsScreen() {
   const { player, logout } = useAuth();
@@ -51,6 +52,8 @@ export default function SettingsScreen() {
       <StatsSection navigate={navigate} />
 
       <ThemeSection theme={theme} setTheme={setTheme} />
+
+      <InstallSection />
 
       {player.isAdmin && (
         <AdminSection
@@ -148,6 +151,78 @@ function ProfileSection({ player, flash, busy, setBusy }) {
         <PrimaryButton disabled={busy} onClick={save}>Save profile</PrimaryButton>
       </div>
     </section>
+  );
+}
+
+function InstallSection() {
+  const { canPrompt, promptInstall, isStandalone, platform } = useInstall();
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  async function onClick() {
+    if (canPrompt) {
+      await promptInstall();
+    } else {
+      setShowInstructions(true);
+    }
+  }
+
+  return (
+    <section className="mb-6">
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">App</p>
+      {isStandalone ? (
+        <p className="text-sm text-ink/70">Installed on this device.</p>
+      ) : (
+        <>
+          <SecondaryButton className="w-full" onClick={onClick}>
+            {canPrompt ? 'Install app' : 'How to install'}
+          </SecondaryButton>
+          {showInstructions && (
+            <InstallInstructions platform={platform} onClose={() => setShowInstructions(false)} />
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function InstallInstructions({ platform, onClose }) {
+  const steps =
+    platform === 'ios'
+      ? [
+          'Tap the Share button at the bottom of Safari.',
+          "Scroll down and pick 'Add to Home Screen'.",
+          "Tap 'Add' in the top right.",
+        ]
+      : platform === 'android'
+      ? [
+          'Open the browser menu (the three dots, usually top right).',
+          "Pick 'Install app' or 'Add to Home Screen'.",
+          'Confirm in the prompt.',
+        ]
+      : [
+          'Look for the install icon in the address bar.',
+          "Or open the browser menu and pick 'Install PT Cornhole'.",
+        ];
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md p-4 rounded-2xl bg-surface border border-ink/20 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-sm font-semibold mb-3">Install PT Cornhole</p>
+        <ol className="text-sm text-ink/80 space-y-2 list-decimal pl-5 mb-4">
+          {steps.map((step, i) => (
+            <li key={i}>{step}</li>
+          ))}
+        </ol>
+        <SecondaryButton className="w-full" onClick={onClose}>
+          Got it
+        </SecondaryButton>
+      </div>
+    </div>
   );
 }
 

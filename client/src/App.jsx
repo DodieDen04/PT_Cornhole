@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
+import { InstallProvider } from './contexts/InstallContext.jsx';
 import SettingsScreen from './screens/SettingsScreen.jsx';
 import SplashScreen from './components/SplashScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
@@ -223,11 +224,13 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <InstallProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </InstallProvider>
     </ThemeProvider>
   );
 }

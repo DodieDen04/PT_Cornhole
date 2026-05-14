@@ -1,36 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useInstall } from '../contexts/InstallContext.jsx';
 
 const DISMISSED_KEY = 'pt_cornhole_install_dismissed';
 
 export default function InstallPrompt() {
-  const [deferred, setDeferred] = useState(null);
-  const [visible, setVisible] = useState(false);
+  const { canPrompt, promptInstall, isStandalone } = useInstall();
+  const [dismissed, setDismissed] = useState(() => !!localStorage.getItem(DISMISSED_KEY));
 
-  useEffect(() => {
-    function onBeforeInstall(e) {
-      e.preventDefault();
-      if (localStorage.getItem(DISMISSED_KEY)) return;
-      setDeferred(e);
-      setVisible(true);
-    }
-    window.addEventListener('beforeinstallprompt', onBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-  }, []);
+  if (isStandalone || dismissed || !canPrompt) return null;
 
   function dismiss() {
-    setVisible(false);
+    setDismissed(true);
     localStorage.setItem(DISMISSED_KEY, '1');
   }
 
   async function install() {
-    if (!deferred) return;
-    deferred.prompt();
-    await deferred.userChoice;
-    setVisible(false);
-    setDeferred(null);
+    await promptInstall();
   }
-
-  if (!visible) return null;
 
   return (
     <div className="fixed bottom-3 inset-x-3 z-40 max-w-md mx-auto p-3 rounded-2xl bg-surface border border-ink/30 shadow-lg flex items-center gap-3">
