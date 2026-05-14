@@ -58,7 +58,7 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
       viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
       className={'w-full max-w-md mx-auto block ' + (className || '')}
     >
-      <rect x="0" y="0" width={VIEWBOX_W} height={VIEWBOX_H} fill="#DC2626" opacity="0.18" />
+      <rect x="0" y="0" width={VIEWBOX_W} height={VIEWBOX_H} fill="#DC2626" />
       <rect
         x={BOARD_X_MIN * VIEWBOX_W}
         y={BOARD_Y_MIN * VIEWBOX_H}

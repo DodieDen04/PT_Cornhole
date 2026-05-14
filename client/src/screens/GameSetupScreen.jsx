@@ -314,7 +314,7 @@ export default function GameSetupScreen() {
       <section className="mb-6">
         <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Bag colours</h2>
         <ColourRow
-          label="Team 1"
+          label="Team 1 (you)"
           value={team1Colour}
           disabled={team2Colour}
           onChange={setTeam1Colour}

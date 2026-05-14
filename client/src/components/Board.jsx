@@ -220,20 +220,27 @@ export default function Board({ bags, onPlace, onMove, disabled }) {
                 ['--bag-r-target']: radius,
               }}
             />
-            {bag.label && !isCornhole && (
-              <text
-                data-bag-id={bag.id}
-                x={cx}
-                y={cy + 0.6}
-                fontSize="1.6"
-                textAnchor="middle"
-                fill="#0a0a0a"
-                fontWeight="700"
-                pointerEvents="none"
-              >
-                {bag.label}
-              </text>
-            )}
+            {bag.label && !isCornhole && (() => {
+              const isYellow = bag.colour === 'YELLOW';
+              return (
+                <text
+                  data-bag-id={bag.id}
+                  x={cx}
+                  y={cy}
+                  fontSize="3.6"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill={isYellow ? '#0a0a0a' : '#FFFFFF'}
+                  fontWeight="800"
+                  stroke={isYellow ? 'none' : '#0a0a0a'}
+                  strokeWidth={isYellow ? 0 : 0.4}
+                  paintOrder="stroke fill"
+                  pointerEvents="none"
+                >
+                  {bag.label}
+                </text>
+              );
+            })()}
           </g>
         );
       })}
