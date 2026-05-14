@@ -220,13 +220,7 @@ export default function ScoringScreen() {
   const throwerHex = throwerTeam === 1 ? team1Hex : throwerTeam === 2 ? team2Hex : null;
 
   return (
-    <div
-      className="h-dvh flex flex-col px-3 max-w-md lg:max-w-4xl mx-auto"
-      style={{
-        paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-      }}
-    >
+    <div className="h-full flex flex-col px-3 py-2 max-w-md lg:max-w-4xl mx-auto">
       <header className="flex items-center justify-between mb-2">
         <PTLogo className="h-7" />
         <span className="text-sm uppercase tracking-wider text-ink/70">

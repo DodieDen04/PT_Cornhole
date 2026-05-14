@@ -176,13 +176,7 @@ export default function PracticeScreen() {
   }
 
   return (
-    <div
-      className="h-dvh flex flex-col px-3 max-w-md lg:max-w-4xl mx-auto"
-      style={{
-        paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
-      }}
-    >
+    <div className="h-full flex flex-col px-3 py-2 max-w-md lg:max-w-4xl mx-auto">
       <header className="flex items-center justify-between mb-2">
         <PTLogo className="h-7" />
         <div className="text-center flex-1 mx-2">

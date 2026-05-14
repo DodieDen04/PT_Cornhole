@@ -49,6 +49,11 @@ html, body, #root {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 * {
   box-sizing: border-box;
 }
