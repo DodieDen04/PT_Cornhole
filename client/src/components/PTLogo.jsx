@@ -27,7 +27,7 @@ export default function PTLogo({ className = '' }) {
         <path
           d="M 4 8 Q 8 4 18 4 L 30 5"
           fill="none"
-          stroke="#FAEEDA"
+          stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
           opacity="0.55"
@@ -45,7 +45,7 @@ export default function PTLogo({ className = '' }) {
         <path
           d="M 8 5 L 30 4 L 50 5"
           fill="none"
-          stroke="#FAEEDA"
+          stroke="currentColor"
           strokeWidth="2.5"
           strokeLinecap="round"
           opacity="0.55"

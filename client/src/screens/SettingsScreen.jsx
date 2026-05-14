@@ -73,7 +73,7 @@ export default function SettingsScreen() {
 function GroupsSection({ navigate }) {
   return (
     <section className="mb-6">
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">My groups</p>
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">My groups</p>
       <SecondaryButton className="w-full" onClick={() => navigate('/groups')}>
         Manage groups
       </SecondaryButton>
@@ -84,7 +84,7 @@ function GroupsSection({ navigate }) {
 function StatsSection({ navigate }) {
   return (
     <section className="mb-6">
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Stats and history</p>
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Stats and history</p>
       <div className="flex flex-col gap-2">
         <SecondaryButton onClick={() => navigate('/history')}>History</SecondaryButton>
         <SecondaryButton onClick={() => navigate('/stats')}>My stats</SecondaryButton>
@@ -126,7 +126,7 @@ function ProfileSection({ player, flash, busy, setBusy }) {
 
   return (
     <section className="mb-6">
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Profile</p>
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Profile</p>
       <div className="flex flex-col gap-2">
         <Field label="Username" value={username} onChange={setUsername} />
         <Field
@@ -154,7 +154,7 @@ function ProfileSection({ player, flash, busy, setBusy }) {
 function ThemeSection({ theme, setTheme }) {
   return (
     <section className="mb-6">
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Theme</p>
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Theme</p>
       <div className="flex gap-2">
         {['dark', 'light'].map((t) => (
           <button
@@ -163,8 +163,8 @@ function ThemeSection({ theme, setTheme }) {
             className={
               'flex-1 min-h-[44px] rounded-xl text-sm font-semibold capitalize ' +
               (theme === t
-                ? 'bg-[#FAEEDA] text-[#0C447C]'
-                : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                ? 'bg-ink text-page'
+                : 'bg-surface text-ink border border-ink/20')
             }
           >
             {t}
@@ -307,13 +307,13 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
   return (
     <>
       <section className="mb-6">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Add player (admin)</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Add player (admin)</p>
         <div className="flex gap-2">
           <input
             placeholder="Username"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="flex-1 min-h-[44px] px-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none"
+            className="flex-1 min-h-[44px] px-3 rounded-xl bg-surface border border-ink/20 text-ink outline-none"
           />
           <input
             placeholder="PIN"
@@ -321,7 +321,7 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
             maxLength={4}
             value={newPin}
             onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-            className="w-20 min-h-[44px] px-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none text-center"
+            className="w-20 min-h-[44px] px-3 rounded-xl bg-surface border border-ink/20 text-ink outline-none text-center"
           />
         </div>
         <PrimaryButton className="w-full mt-2" disabled={busy} onClick={createPlayer}>
@@ -330,10 +330,10 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
       </section>
 
       <section className="mb-6">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Manage players</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Manage players</p>
         <ul className="flex flex-col gap-2">
           {players.map((p) => (
-            <li key={p.id} className="p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15">
+            <li key={p.id} className="p-3 rounded-xl bg-surface border border-ink/15">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium flex items-center gap-2 flex-wrap">
                   <span>{p.username}</span>
@@ -341,12 +341,12 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
                     <span className="text-[10px] uppercase tracking-wider text-[#FFD700]">Admin</span>
                   )}
                   {p.isGuest && (
-                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#FAEEDA]/15 text-[#FAEEDA]/80 border border-[#FAEEDA]/30">
+                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-ink/15 text-ink/80 border border-ink/30">
                       Guest
                     </span>
                   )}
                   {p.id === self.id && (
-                    <span className="text-xs text-[#FAEEDA]/60">(you)</span>
+                    <span className="text-xs text-ink/60">(you)</span>
                   )}
                 </span>
               </div>
@@ -356,14 +356,14 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
                     <button
                       disabled={busy}
                       onClick={() => renamePlayer(p.id, p.username)}
-                      className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                      className="min-h-[36px] px-3 rounded-lg text-xs bg-surface-2 border border-ink/20"
                     >
                       Rename
                     </button>
                     <button
                       disabled={busy}
                       onClick={() => upgradeGuest(p.id, p.username)}
-                      className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                      className="min-h-[36px] px-3 rounded-lg text-xs bg-surface-2 border border-ink/20"
                     >
                       Upgrade to full account
                     </button>
@@ -373,7 +373,7 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
                     <button
                       disabled={busy}
                       onClick={() => resetPlayerPin(p.id)}
-                      className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                      className="min-h-[36px] px-3 rounded-lg text-xs bg-surface-2 border border-ink/20"
                     >
                       Reset PIN
                     </button>
@@ -381,7 +381,7 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
                       <button
                         disabled={busy}
                         onClick={() => makeAdmin(p.id)}
-                        className="min-h-[36px] px-3 rounded-lg text-xs bg-[#0C447C] border border-[#FAEEDA]/20"
+                        className="min-h-[36px] px-3 rounded-lg text-xs bg-surface-2 border border-ink/20"
                       >
                         Make admin
                       </button>
@@ -426,7 +426,7 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
         {confirmReset > 0 && (
           <button
             onClick={() => setConfirmReset(0)}
-            className="w-full mt-2 text-xs text-[#FAEEDA]/70 underline"
+            className="w-full mt-2 text-xs text-ink/70 underline"
           >
             Cancel
           </button>
@@ -439,13 +439,13 @@ function AdminSection({ players, self, refreshPlayers, flash, busy, setBusy }) {
 function Field({ label, value, onChange, type = 'text', inputMode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-xs text-[#FAEEDA]/70">{label}</span>
+      <span className="text-xs text-ink/70">{label}</span>
       <input
         type={type}
         inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="min-h-[44px] px-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60"
+        className="min-h-[44px] px-3 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60"
       />
     </label>
   );

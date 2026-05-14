@@ -48,20 +48,20 @@ export default function TournamentSetupScreen() {
       </header>
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Name (optional)</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Name (optional)</p>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Friday night cornhole"
-          className="w-full min-h-[44px] px-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none"
+          className="w-full min-h-[44px] px-3 rounded-xl bg-surface border border-ink/20 text-ink outline-none"
         />
       </section>
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">
           Players ({selected.length} picked &middot; {matches} matches)
         </p>
-        <p className="text-xs text-[#FAEEDA]/60 mb-2">Round-robin, 1v1. Pick 3 to 16 players.</p>
+        <p className="text-xs text-ink/60 mb-2">Round-robin, 1v1. Pick 3 to 16 players.</p>
         <div className="flex flex-col gap-2">
           {players.map((p) => {
             const active = selected.includes(p.id);
@@ -72,8 +72,8 @@ export default function TournamentSetupScreen() {
                 className={
                   'p-3 rounded-xl text-left font-medium border ' +
                   (active
-                    ? 'bg-[#FAEEDA] text-[#0C447C] border-[#FAEEDA]'
-                    : 'bg-[#082F58] text-[#FAEEDA] border-[#FAEEDA]/20')
+                    ? 'bg-ink text-page border-ink'
+                    : 'bg-surface text-ink border-ink/20')
                 }
               >
                 {active ? '✓ ' : ''}
@@ -85,7 +85,7 @@ export default function TournamentSetupScreen() {
       </section>
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Target score</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Target score</p>
         <div className="flex gap-2">
           {TARGETS.map((t) => (
             <button
@@ -94,8 +94,8 @@ export default function TournamentSetupScreen() {
               className={
                 'flex-1 min-h-[44px] rounded-xl font-semibold ' +
                 (target === t
-                  ? 'bg-[#FAEEDA] text-[#0C447C]'
-                  : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                  ? 'bg-ink text-page'
+                  : 'bg-surface text-ink border border-ink/20')
               }
             >
               {t}

@@ -68,18 +68,18 @@ export default function InvitationsScreen() {
       )}
 
       {loading ? (
-        <p className="text-sm text-[#FAEEDA]/70">Loading...</p>
+        <p className="text-sm text-ink/70">Loading...</p>
       ) : invitations.length === 0 ? (
-        <p className="text-sm text-[#FAEEDA]/70">No pending invitations.</p>
+        <p className="text-sm text-ink/70">No pending invitations.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {invitations.map((inv) => (
             <li
               key={inv.groupId}
-              className="p-4 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15"
+              className="p-4 rounded-2xl bg-surface border border-ink/15"
             >
               <p className="font-semibold text-base">{inv.groupName}</p>
-              <p className="text-xs text-[#FAEEDA]/70 mt-0.5">
+              <p className="text-xs text-ink/70 mt-0.5">
                 Invited by {inv.invitedBy} &middot; {inv.memberCount} member{inv.memberCount === 1 ? '' : 's'}
               </p>
               <div className="grid grid-cols-2 gap-2 mt-3">

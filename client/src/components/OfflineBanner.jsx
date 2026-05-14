@@ -46,7 +46,7 @@ export default function OfflineBanner() {
   if (online && pending === 0) return null;
 
   return (
-    <div className="fixed top-2 inset-x-2 z-40 max-w-md mx-auto px-3 py-2 rounded-xl bg-[#7F1D1D]/85 border border-[#FAEEDA]/30 text-[#FAEEDA] text-xs flex items-center gap-2">
+    <div className="fixed top-2 inset-x-2 z-40 max-w-md mx-auto px-3 py-2 rounded-xl bg-[#7F1D1D]/85 border border-ink/30 text-ink text-xs flex items-center gap-2">
       <span
         className="w-2 h-2 rounded-full"
         style={{ background: online ? '#FBBF24' : '#EF4444' }}

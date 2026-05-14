@@ -34,23 +34,23 @@ export default function RegisterScreen() {
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <h1 className="text-3xl font-bold mb-2 tracking-tight">Create account</h1>
       {firstRun && (
-        <p className="text-sm text-[#FAEEDA]/80 mb-6 max-w-sm text-center">
+        <p className="text-sm text-ink/80 mb-6 max-w-sm text-center">
           You will be the first player and become admin.
         </p>
       )}
       <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-4 mt-4">
         <label className="flex flex-col gap-1">
-          <span className="text-sm text-[#FAEEDA]/80">Username</span>
+          <span className="text-sm text-ink/80">Username</span>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="min-h-[48px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60"
+            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60"
             required
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm text-[#FAEEDA]/80">PIN (4 digits)</span>
+          <span className="text-sm text-ink/80">PIN (4 digits)</span>
           <input
             type="password"
             inputMode="numeric"
@@ -58,12 +58,12 @@ export default function RegisterScreen() {
             maxLength={4}
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            className="min-h-[48px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60 tracking-[0.5em] text-center"
+            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60 tracking-[0.5em] text-center"
             required
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm text-[#FAEEDA]/80">Confirm PIN</span>
+          <span className="text-sm text-ink/80">Confirm PIN</span>
           <input
             type="password"
             inputMode="numeric"
@@ -71,7 +71,7 @@ export default function RegisterScreen() {
             maxLength={4}
             value={pin2}
             onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))}
-            className="min-h-[48px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60 tracking-[0.5em] text-center"
+            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60 tracking-[0.5em] text-center"
             required
           />
         </label>
@@ -80,7 +80,7 @@ export default function RegisterScreen() {
           {submitting ? 'Creating...' : 'Create account'}
         </PrimaryButton>
       </form>
-      <Link to="/login" className="mt-6 text-sm text-[#FAEEDA] underline underline-offset-2">
+      <Link to="/login" className="mt-6 text-sm text-ink underline underline-offset-2">
         Have an account? Login
       </Link>
     </div>

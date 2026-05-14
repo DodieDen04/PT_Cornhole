@@ -103,7 +103,7 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
           width={(BOARD_X_MAX - BOARD_X_MIN) * VIEWBOX_W}
           height={(BOARD_Y_MAX - BOARD_Y_MIN) * VIEWBOX_H}
           fill="none"
-          stroke="#FAEEDA"
+          stroke="currentColor"
           strokeOpacity="0.4"
           strokeWidth="0.4"
           rx="1.5"
@@ -114,7 +114,7 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
         cy={HOLE_CENTRE_Y * VIEWBOX_H}
         r={HOLE_RADIUS * VIEWBOX_W}
         fill="none"
-        stroke="#FAEEDA"
+        stroke="currentColor"
         strokeOpacity="0.4"
         strokeWidth="0.4"
       />
@@ -123,7 +123,7 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
         <text
           x={VIEWBOX_W / 2}
           y={VIEWBOX_H / 2}
-          fill="#FAEEDA"
+          fill="currentColor"
           fontSize="4"
           textAnchor="middle"
           opacity="0.5"
@@ -137,7 +137,7 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
 
 export function HeatmapLegend() {
   return (
-    <div className="flex items-center justify-center gap-2 mt-2 text-[10px] uppercase tracking-wider text-[#FAEEDA]/60">
+    <div className="flex items-center justify-center gap-2 mt-2 text-[10px] uppercase tracking-wider text-ink/60">
       <span>Less</span>
       <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(59,130,246,0.45)' }} />
       <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(251,191,36,0.6)' }} />

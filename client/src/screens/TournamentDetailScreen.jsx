@@ -38,7 +38,7 @@ export default function TournamentDetailScreen() {
   }
 
   if (!data) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const { tournament, standings } = data;
@@ -49,11 +49,11 @@ export default function TournamentDetailScreen() {
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto pb-12">
       <header className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">
+          <p className="text-xs uppercase tracking-wider text-ink/60">
             Tournament &middot; {isComplete ? 'Final' : 'Live'}
           </p>
           <h1 className="text-xl font-bold tracking-tight">{tournament.name || 'Tournament'}</h1>
-          <p className="text-xs text-[#FAEEDA]/60">
+          <p className="text-xs text-ink/60">
             Round-robin &middot; first to {tournament.targetScore}
           </p>
         </div>
@@ -64,23 +64,23 @@ export default function TournamentDetailScreen() {
         <div className="my-4 p-4 rounded-2xl bg-[#FFD700]/15 border border-[#FFD700]/40 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-[#FFD700]">Champion</p>
           <p className="text-2xl font-black mt-1">{winner.username}</p>
-          <p className="text-xs text-[#FAEEDA]/70 mt-1">
+          <p className="text-xs text-ink/70 mt-1">
             {winner.wins} W &middot; {winner.losses} L
           </p>
         </div>
       )}
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Standings</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Standings</p>
         <ol className="flex flex-col gap-1.5">
           {standings.map((s, i) => (
             <li
               key={s.playerId}
-              className="flex items-center gap-3 p-2 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15"
+              className="flex items-center gap-3 p-2 rounded-xl bg-surface border border-ink/15"
             >
-              <span className="w-6 text-center font-black text-[#FAEEDA]/80">{i + 1}</span>
+              <span className="w-6 text-center font-black text-ink/80">{i + 1}</span>
               <span className="flex-1 font-medium">{s.username}</span>
-              <span className="text-xs text-[#FAEEDA]/60">
+              <span className="text-xs text-ink/60">
                 {s.wins}W &middot; {s.losses}L
               </span>
               <span
@@ -96,7 +96,7 @@ export default function TournamentDetailScreen() {
       </section>
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Matches</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Matches</p>
         <ul className="flex flex-col gap-2">
           {tournament.matches.map((m) => {
             const played = !!m.gameId && m.game?.status === 'COMPLETED';
@@ -105,10 +105,10 @@ export default function TournamentDetailScreen() {
             return (
               <li
                 key={m.id}
-                className="p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15"
+                className="p-3 rounded-xl bg-surface border border-ink/15"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-[#FAEEDA]/60">Match {m.matchOrder}</span>
+                  <span className="text-xs text-ink/60">Match {m.matchOrder}</span>
                   {played && (
                     <span className="text-[10px] uppercase tracking-wider text-[#22C55E]">Played</span>
                   )}
@@ -120,7 +120,7 @@ export default function TournamentDetailScreen() {
                   <span className={m.winnerId === m.player1Id ? 'font-bold' : ''}>
                     {m.player1.username}
                   </span>
-                  <span className="text-[#FAEEDA]/70">
+                  <span className="text-ink/70">
                     {r ? `${r.team1Score} – ${r.team2Score}` : 'vs'}
                   </span>
                   <span className={m.winnerId === m.player2Id ? 'font-bold' : ''}>

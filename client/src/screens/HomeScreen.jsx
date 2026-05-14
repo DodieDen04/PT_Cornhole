@@ -98,16 +98,16 @@ export default function HomeScreen() {
         {!loading && invitations.length > 0 && (
           <button
             onClick={() => navigate('/invitations')}
-            className="mt-2 p-3 rounded-2xl bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FAEEDA] text-left flex items-center gap-3"
+            className="mt-2 p-3 rounded-2xl bg-[#FFD700]/15 border border-[#FFD700]/40 text-ink text-left flex items-center gap-3"
           >
-            <span className="w-7 h-7 rounded-full bg-[#FFD700] text-[#0C447C] font-bold text-sm flex items-center justify-center shrink-0">
+            <span className="w-7 h-7 rounded-full bg-[#FFD700] text-page font-bold text-sm flex items-center justify-center shrink-0">
               {invitations.length}
             </span>
             <span className="flex-1">
               You have {invitations.length} group invitation
               {invitations.length === 1 ? '' : 's'}
             </span>
-            <span className="text-[#FAEEDA]/60">›</span>
+            <span className="text-ink/60">›</span>
           </button>
         )}
       </div>
@@ -118,9 +118,9 @@ export default function HomeScreen() {
 function ResumeBanner({ game, onResume, onDiscard, discarding }) {
   const lines = describeGame(game);
   return (
-    <div className="mb-6 p-4 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/20">
+    <div className="mb-6 p-4 rounded-2xl bg-surface border border-ink/20">
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="text-sm font-semibold text-[#FAEEDA]">
+        <p className="text-sm font-semibold text-ink">
           {game.mode === 'PRACTICE' ? 'Practice in progress' : 'Match in progress'}
         </p>
         <button
@@ -131,7 +131,7 @@ function ResumeBanner({ game, onResume, onDiscard, discarding }) {
           {discarding ? 'Discarding...' : 'Discard'}
         </button>
       </div>
-      <div className="text-xs text-[#FAEEDA]/70 mb-3 space-y-0.5">
+      <div className="text-xs text-ink/70 mb-3 space-y-0.5">
         {lines.map((line, i) => (
           <p key={i}>{line}</p>
         ))}

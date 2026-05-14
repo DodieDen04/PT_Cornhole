@@ -91,7 +91,7 @@ export default function PlayerStatsScreen() {
   );
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
   if (!stats) {
     return (
@@ -108,7 +108,7 @@ export default function PlayerStatsScreen() {
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto pb-12">
       <header className="flex items-center justify-between mb-5">
         <div>
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">Stats</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60">Stats</p>
           <h1 className="text-2xl font-bold tracking-tight">{player.username}</h1>
         </div>
         <GhostButton onClick={() => navigate('/')}>Home</GhostButton>
@@ -117,7 +117,7 @@ export default function PlayerStatsScreen() {
       <GroupFilter value={groupId} onChange={setGroupId} />
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Competitive</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Competitive</p>
         <div className="grid grid-cols-3 gap-2">
           <Tile label="Win %" value={`${c.winPct}%`} />
           <Tile label="W – L" value={`${c.won} – ${c.lost}`} />
@@ -136,7 +136,7 @@ export default function PlayerStatsScreen() {
 
       {p.totalThrows > 0 && (
         <section className="mb-5">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Practice</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Practice</p>
           <div className="grid grid-cols-3 gap-2">
             <Tile label="Sets" value={p.totalSets} />
             <Tile label="Throws" value={p.totalThrows} />
@@ -146,7 +146,7 @@ export default function PlayerStatsScreen() {
       )}
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">
           Cornhole accuracy trend
         </p>
         <TrendChart trend={stats.trend || []} />
@@ -154,11 +154,11 @@ export default function PlayerStatsScreen() {
 
       {otherPlayers.length > 0 && (
         <section className="mb-5">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Head to head</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Head to head</p>
           <select
             value={opponentId}
             onChange={(e) => setOpponentId(e.target.value)}
-            className="w-full min-h-[44px] px-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none"
+            className="w-full min-h-[44px] px-3 rounded-xl bg-surface border border-ink/20 text-ink outline-none"
           >
             <option value="">Select opponent...</option>
             {otherPlayers.map((p) => (
@@ -166,14 +166,14 @@ export default function PlayerStatsScreen() {
             ))}
           </select>
           {h2h && (
-            <div className="mt-2 p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15 text-sm">
+            <div className="mt-2 p-3 rounded-xl bg-surface border border-ink/15 text-sm">
               {h2h.totalGames === 0 ? (
-                <em className="text-[#FAEEDA]/60">No games as opponents yet.</em>
+                <em className="text-ink/60">No games as opponents yet.</em>
               ) : (
                 <p>
                   <strong>{player.username}</strong> {h2h.player1Wins} &ndash; {h2h.player2Wins}{' '}
                   <strong>{otherPlayers.find((o) => o.id === opponentId)?.username}</strong>
-                  <span className="text-[#FAEEDA]/60"> &middot; {h2h.totalGames} games</span>
+                  <span className="text-ink/60"> &middot; {h2h.totalGames} games</span>
                 </p>
               )}
             </div>
@@ -183,8 +183,8 @@ export default function PlayerStatsScreen() {
 
       <section className="mb-5">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">Heatmap</p>
-          <span className="text-xs text-[#FAEEDA]/60">{throws.length} throws</span>
+          <p className="text-xs uppercase tracking-wider text-ink/60">Heatmap</p>
+          <span className="text-xs text-ink/60">{throws.length} throws</span>
         </div>
 
         <FilterRow
@@ -233,9 +233,9 @@ export default function PlayerStatsScreen() {
 
 function Tile({ label, value, colour }) {
   return (
-    <div className="rounded-xl p-3 bg-[#082F58] border border-[#FAEEDA]/15 text-left">
-      <p className="text-[10px] uppercase tracking-wider text-[#FAEEDA]/60">{label}</p>
-      <p className="text-xl font-bold mt-0.5" style={{ color: colour || '#FAEEDA' }}>
+    <div className="rounded-xl p-3 bg-surface border border-ink/15 text-left">
+      <p className="text-[10px] uppercase tracking-wider text-ink/60">{label}</p>
+      <p className="text-xl font-bold mt-0.5" style={{ color: colour || 'var(--pt-ink)' }}>
         {value}
       </p>
     </div>
@@ -252,8 +252,8 @@ function FilterRow({ options, value, onChange }) {
           className={
             'flex-1 min-h-[36px] rounded-lg text-xs font-semibold ' +
             (value === o.value
-              ? 'bg-[#FAEEDA] text-[#0C447C]'
-              : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+              ? 'bg-ink text-page'
+              : 'bg-surface text-ink border border-ink/20')
           }
         >
           {o.label}

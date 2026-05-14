@@ -38,8 +38,8 @@ export default function LeaderboardScreen() {
             className={
               'flex-1 min-h-[40px] rounded-xl text-sm font-semibold ' +
               (minGames === m
-                ? 'bg-[#FAEEDA] text-[#0C447C]'
-                : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                ? 'bg-ink text-page'
+                : 'bg-surface text-ink border border-ink/20')
             }
           >
             Min {m} game{m === 1 ? '' : 's'}
@@ -48,21 +48,21 @@ export default function LeaderboardScreen() {
       </div>
 
       {loading ? (
-        <p className="text-[#FAEEDA]/70 text-sm">Loading...</p>
+        <p className="text-ink/70 text-sm">Loading...</p>
       ) : rows.length === 0 ? (
-        <p className="text-[#FAEEDA]/70 text-sm">No qualifying players yet.</p>
+        <p className="text-ink/70 text-sm">No qualifying players yet.</p>
       ) : (
         <ol className="flex flex-col gap-2">
           {rows.map((r, i) => (
             <li
               key={r.id}
-              className="flex items-center gap-3 p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15 cursor-pointer hover:border-[#FAEEDA]/40"
+              className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-ink/15 cursor-pointer hover:border-ink/40"
               onClick={() => navigate(`/stats/${r.id}`)}
             >
-              <span className="w-7 text-center text-2xl font-black text-[#FAEEDA]/80">{i + 1}</span>
+              <span className="w-7 text-center text-2xl font-black text-ink/80">{i + 1}</span>
               <div className="flex-1">
                 <p className="font-semibold">{r.username}</p>
-                <p className="text-xs text-[#FAEEDA]/60">
+                <p className="text-xs text-ink/60">
                   {r.wins}W &middot; {r.losses}L &middot; {r.games} games
                 </p>
               </div>

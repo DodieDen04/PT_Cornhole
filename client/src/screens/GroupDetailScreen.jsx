@@ -99,7 +99,7 @@ export default function GroupDetailScreen() {
     );
   }
   if (!group) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const isAdmin = group.isAdmin;
@@ -121,7 +121,7 @@ export default function GroupDetailScreen() {
       )}
 
       <section className="mb-5">
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">
           Members ({members.length})
         </p>
         <ul className="flex flex-col gap-1.5">
@@ -132,17 +132,17 @@ export default function GroupDetailScreen() {
             return (
               <li
                 key={m.id}
-                className="p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15 flex items-center gap-2"
+                className="p-3 rounded-xl bg-surface border border-ink/15 flex items-center gap-2"
               >
                 <span className="flex-1 font-medium truncate">
                   {m.player.username}
-                  {isMe && <span className="ml-1 text-xs text-[#FAEEDA]/60">(you)</span>}
+                  {isMe && <span className="ml-1 text-xs text-ink/60">(you)</span>}
                 </span>
                 {isCreator && (
                   <span className="text-[10px] uppercase tracking-wider text-[#FFD700]">Admin</span>
                 )}
                 {m.player.isGuest && (
-                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#FAEEDA]/15 text-[#FAEEDA]/80 border border-[#FAEEDA]/30">
+                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-ink/15 text-ink/80 border border-ink/30">
                     Guest
                   </span>
                 )}
@@ -151,7 +151,7 @@ export default function GroupDetailScreen() {
                     disabled={busy}
                     onClick={() => removeMember(m.playerId, m.player.username)}
                     aria-label={`Remove ${m.player.username}`}
-                    className="w-7 h-7 rounded-lg bg-[#7F1D1D]/60 text-[#FAEEDA] text-xs"
+                    className="w-7 h-7 rounded-lg bg-[#7F1D1D]/60 text-ink text-xs"
                   >
                     ✕
                   </button>
@@ -164,22 +164,22 @@ export default function GroupDetailScreen() {
 
       {isAdmin && pending.length > 0 && (
         <section className="mb-5">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">
             Pending invitations ({pending.length})
           </p>
           <ul className="flex flex-col gap-1.5">
             {pending.map((m) => (
               <li
                 key={m.id}
-                className="p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/15 flex items-center gap-2"
+                className="p-3 rounded-xl bg-surface border border-ink/15 flex items-center gap-2"
               >
                 <span className="flex-1 font-medium truncate">{m.player.username}</span>
-                <span className="text-xs text-[#FAEEDA]/60">waiting</span>
+                <span className="text-xs text-ink/60">waiting</span>
                 <button
                   disabled={busy}
                   onClick={() => removeMember(m.playerId, m.player.username)}
                   aria-label={`Cancel ${m.player.username}`}
-                  className="w-7 h-7 rounded-lg bg-[#7F1D1D]/60 text-[#FAEEDA] text-xs"
+                  className="w-7 h-7 rounded-lg bg-[#7F1D1D]/60 text-ink text-xs"
                 >
                   ✕
                 </button>
@@ -294,11 +294,11 @@ function PlayerPickerModal({ mode, existingMembers, groupId, onClose, onDone }) 
 
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl flex flex-col" style={{ maxHeight: 'calc(100dvh - 2rem)' }}>
+      <div className="w-full max-w-sm rounded-2xl bg-surface-2 border border-ink/25 p-5 shadow-2xl flex flex-col" style={{ maxHeight: 'calc(100dvh - 2rem)' }}>
         <h3 className="text-lg font-bold mb-1">
           {mode === 'invite' ? 'Invite players' : 'Add guest players'}
         </h3>
-        <p className="text-xs text-[#FAEEDA]/70 mb-3">
+        <p className="text-xs text-ink/70 mb-3">
           {mode === 'invite'
             ? 'Registered users will see an invitation. Pick any number.'
             : 'Guests are added immediately. Pick any number.'}
@@ -310,9 +310,9 @@ function PlayerPickerModal({ mode, existingMembers, groupId, onClose, onDone }) 
 
         <div className="flex-1 overflow-y-auto -mx-1 px-1 mb-3">
           {loading ? (
-            <p className="text-sm text-[#FAEEDA]/70">Loading...</p>
+            <p className="text-sm text-ink/70">Loading...</p>
           ) : candidates.length === 0 ? (
-            <p className="text-sm text-[#FAEEDA]/70">
+            <p className="text-sm text-ink/70">
               {mode === 'invite'
                 ? 'No registered users available to invite.'
                 : 'No guest players available. Create one from the New Game screen.'}
@@ -328,20 +328,20 @@ function PlayerPickerModal({ mode, existingMembers, groupId, onClose, onDone }) 
                       className={
                         'w-full p-2.5 rounded-xl flex items-center gap-2 text-left ' +
                         (checked
-                          ? 'bg-[#FAEEDA] text-[#0C447C]'
-                          : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                          ? 'bg-ink text-page'
+                          : 'bg-surface text-ink border border-ink/20')
                       }
                     >
                       <span
                         className={
                           'w-4 h-4 rounded border ' +
                           (checked
-                            ? 'bg-[#0C447C] border-[#0C447C]'
-                            : 'border-[#FAEEDA]/40')
+                            ? 'bg-surface-2 border-surface-2'
+                            : 'border-ink/40')
                         }
                       >
                         {checked && (
-                          <span className="block text-[10px] leading-4 text-center text-[#FAEEDA]">✓</span>
+                          <span className="block text-[10px] leading-4 text-center text-ink">✓</span>
                         )}
                       </span>
                       <span className="flex-1 truncate font-medium">{p.username}</span>
@@ -350,8 +350,8 @@ function PlayerPickerModal({ mode, existingMembers, groupId, onClose, onDone }) 
                           className={
                             'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border ' +
                             (checked
-                              ? 'bg-[#0C447C]/15 text-[#0C447C] border-[#0C447C]/30'
-                              : 'bg-[#FAEEDA]/15 text-[#FAEEDA]/80 border-[#FAEEDA]/30')
+                              ? 'bg-surface-2/15 text-page border-surface-2/30'
+                              : 'bg-ink/15 text-ink/80 border-ink/30')
                           }
                         >
                           Guest

@@ -86,7 +86,7 @@ export default function PracticeSetupScreen() {
       </header>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">You</h2>
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">You</h2>
         <ColourRow
           value={colours[player.id]}
           disabled={partnerId ? colours[partnerId] : null}
@@ -95,7 +95,7 @@ export default function PracticeSetupScreen() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">
           Practice partner (optional)
         </h2>
         <div className="flex flex-col gap-2">
@@ -106,8 +106,8 @@ export default function PracticeSetupScreen() {
               className={
                 'p-3 rounded-xl text-left font-medium border ' +
                 (partnerId === p.id
-                  ? 'bg-[#FAEEDA] text-[#0C447C] border-[#FAEEDA]'
-                  : 'bg-[#082F58] text-[#FAEEDA] border-[#FAEEDA]/20')
+                  ? 'bg-ink text-page border-ink'
+                  : 'bg-surface text-ink border-ink/20')
               }
             >
               {p.username}
@@ -116,7 +116,7 @@ export default function PracticeSetupScreen() {
         </div>
         {partnerId && (
           <div className="mt-3">
-            <p className="text-xs text-[#FAEEDA]/70 mb-1">Partner colour</p>
+            <p className="text-xs text-ink/70 mb-1">Partner colour</p>
             <ColourRow
               value={colours[partnerId]}
               disabled={colours[player.id]}
@@ -127,7 +127,7 @@ export default function PracticeSetupScreen() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Throws per set</h2>
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Throws per set</h2>
         <div className="flex gap-2">
           {[4, 8].map((n) => (
             <button
@@ -136,8 +136,8 @@ export default function PracticeSetupScreen() {
               className={
                 'flex-1 min-h-[44px] rounded-xl font-semibold ' +
                 (throwsPerSet === n
-                  ? 'bg-[#FAEEDA] text-[#0C447C]'
-                  : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                  ? 'bg-ink text-page'
+                  : 'bg-surface text-ink border border-ink/20')
               }
             >
               {n}
@@ -147,7 +147,7 @@ export default function PracticeSetupScreen() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">
           Session tag (optional)
         </h2>
         <input
@@ -155,7 +155,7 @@ export default function PracticeSetupScreen() {
           value={tag}
           onChange={(e) => setTag(e.target.value)}
           placeholder="e.g. left hand, 15ft"
-          className="w-full min-h-[44px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60"
+          className="w-full min-h-[44px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60"
         />
       </section>
 
@@ -181,13 +181,13 @@ function ColourRow({ value, disabled, onChange }) {
             disabled={isDisabled}
             className={
               'flex-1 min-h-[44px] rounded-xl border-2 flex items-center justify-center ' +
-              (isSelected ? 'border-[#FAEEDA]' : 'border-transparent') +
+              (isSelected ? 'border-ink' : 'border-transparent') +
               (isDisabled ? ' opacity-30' : '')
             }
             style={{ background: BAG_HEX[c] }}
             aria-label={BAG_LABEL[c]}
           >
-            {isSelected && <span className="text-[#0C447C] font-bold">✓</span>}
+            {isSelected && <span className="text-page font-bold">✓</span>}
           </button>
         );
       })}

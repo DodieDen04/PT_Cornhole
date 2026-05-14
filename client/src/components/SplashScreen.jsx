@@ -37,7 +37,7 @@ export default function SplashScreen({ ready, onComplete }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0C447C] transition-opacity"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0C447C] text-[#FAEEDA] transition-opacity"
       style={{
         opacity: fadingOut ? 0 : 1,
         transitionDuration: `${FADE_MS}ms`,
@@ -46,7 +46,7 @@ export default function SplashScreen({ ready, onComplete }) {
       }}
     >
       <SplashArt className="w-64 max-w-[60vw]" />
-      <p className="mt-8 text-[13px] font-medium tracking-[0.2em] text-[#FAEEDA] uppercase">
+      <p className="mt-8 text-[13px] font-medium tracking-[0.2em] uppercase">
         PT for your cornhole
       </p>
       <div className="mt-6 flex gap-2">
@@ -63,7 +63,7 @@ export default function SplashScreen({ ready, onComplete }) {
           style={{ animationDelay: '0.4s' }}
         />
       </div>
-      <span className="absolute bottom-6 text-[9px] tracking-wider text-[#FAEEDA]/40">
+      <span className="absolute bottom-6 text-[9px] tracking-wider opacity-40">
         {VERSION}
       </span>
     </div>

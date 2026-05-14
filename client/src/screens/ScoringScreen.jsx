@@ -209,7 +209,7 @@ export default function ScoringScreen() {
     );
   }
   if (!game || !round) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const throwerPlayer = thrower ? game.players.find((gp) => gp.playerId === thrower.playerId)?.player : null;
@@ -229,7 +229,7 @@ export default function ScoringScreen() {
     >
       <header className="flex items-center justify-between mb-2">
         <PTLogo className="h-7" />
-        <span className="text-sm uppercase tracking-wider text-[#FAEEDA]/70">
+        <span className="text-sm uppercase tracking-wider text-ink/70">
           Round {round.roundNumber}
         </span>
       </header>
@@ -254,7 +254,7 @@ export default function ScoringScreen() {
       <div className="text-center mb-2 min-h-[24px]">
         {throwerPlayer ? (
           <p className="text-sm">
-            <span className="text-[#FAEEDA]/60">Now throwing: </span>
+            <span className="text-ink/60">Now throwing: </span>
             <span className="font-semibold">{throwerPlayer.username}</span>
             <span
               className="inline-block w-3 h-3 rounded-full ml-2 align-middle"
@@ -262,7 +262,7 @@ export default function ScoringScreen() {
             />
           </p>
         ) : (
-          <p className="text-sm font-semibold text-[#FAEEDA]/80">All 8 bags thrown</p>
+          <p className="text-sm font-semibold text-ink/80">All 8 bags thrown</p>
         )}
       </div>
 
@@ -310,7 +310,7 @@ export default function ScoringScreen() {
       {showQuit && (
         <Modal>
           <h3 className="text-lg font-semibold mb-2">End this game?</h3>
-          <p className="text-sm text-[#FAEEDA]/80 mb-4">
+          <p className="text-sm text-ink/80 mb-4">
             The game will be marked as abandoned. This cannot be undone.
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -357,7 +357,7 @@ function EndRoundPopup({
   return (
     <div className="fixed inset-0 bg-black/75 z-40 flex items-center justify-center p-4">
       <div
-        className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl flex flex-col"
+        className="w-full max-w-sm rounded-2xl bg-surface-2 border border-ink/25 p-5 shadow-2xl flex flex-col"
         style={{ maxHeight: 'calc(100dvh - 2rem)' }}
       >
         <h3 className="text-base font-bold text-center mb-3">
@@ -380,10 +380,10 @@ function EndRoundPopup({
         </div>
 
         <div className="text-center text-sm mb-3">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">This round</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">This round</p>
           <p>
             <span style={{ color: team1Hex }}>T1: {round.team1RoundScore}</span>
-            <span className="text-[#FAEEDA]/40 mx-2">|</span>
+            <span className="text-ink/40 mx-2">|</span>
             <span style={{ color: team2Hex }}>T2: {round.team2RoundScore}</span>
           </p>
           <p className="font-semibold mt-0.5">
@@ -393,7 +393,7 @@ function EndRoundPopup({
           </p>
         </div>
 
-        <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">Bag details</p>
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">Bag details</p>
         <ol className="text-sm space-y-1 mb-4 overflow-y-auto" style={{ maxHeight: '32vh' }}>
           {round.bagThrows.map((t, i) => {
             const team = teamByPlayer[t.playerId];
@@ -409,7 +409,7 @@ function EndRoundPopup({
             const dim = t.result === 'OFF' ? 0.55 : 1;
             return (
               <li key={t.id} className="flex items-center gap-2">
-                <span className="w-5 text-right text-[#FAEEDA]/50 text-xs">{i + 1}.</span>
+                <span className="w-5 text-right text-ink/50 text-xs">{i + 1}.</span>
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: hex }} />
                 <span className="flex-1 truncate">{playerName}</span>
                 <span style={{ opacity: dim }}>{label}</span>
@@ -436,7 +436,7 @@ function EndRoundPopup({
         <button
           onClick={onQuit}
           disabled={busy}
-          className="w-full mt-3 text-xs text-[#FAEEDA]/55 underline underline-offset-4 disabled:opacity-50"
+          className="w-full mt-3 text-xs text-ink/55 underline underline-offset-4 disabled:opacity-50"
         >
           Quit game
         </button>
@@ -449,7 +449,7 @@ function PopupScore({ label, score, colour, winner }) {
   return (
     <div
       className={
-        'rounded-xl px-3 py-2 border ' + (winner ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        'rounded-xl px-3 py-2 border ' + (winner ? 'border-ink' : 'border-ink/20')
       }
       style={{
         background: 'rgba(8, 47, 88, 0.7)',
@@ -458,7 +458,7 @@ function PopupScore({ label, score, colour, winner }) {
     >
       <div className="flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colour }} />
-        <span className="text-[10px] uppercase tracking-wider text-[#FAEEDA]/70 truncate">
+        <span className="text-[10px] uppercase tracking-wider text-ink/70 truncate">
           {label}
         </span>
       </div>
@@ -472,7 +472,7 @@ function PopupScore({ label, score, colour, winner }) {
 function Modal({ children }) {
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl">
+      <div className="w-full max-w-sm rounded-2xl bg-surface-2 border border-ink/25 p-5 shadow-2xl">
         {children}
       </div>
     </div>
@@ -484,13 +484,13 @@ function TeamCard({ label, score, colour, highlight, thrown }) {
     <div
       className={
         'rounded-2xl px-3 py-2 border ' +
-        (highlight ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        (highlight ? 'border-ink' : 'border-ink/20')
       }
       style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
       <div className="flex items-center gap-1.5">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colour }} />
-        <span className="text-[10px] uppercase tracking-wider text-[#FAEEDA]/70 truncate">
+        <span className="text-[10px] uppercase tracking-wider text-ink/70 truncate">
           {label}
         </span>
       </div>

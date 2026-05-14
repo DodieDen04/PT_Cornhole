@@ -59,7 +59,7 @@ export default function SpectatorScreen() {
     );
   }
   if (!game) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const team1 = game.players.filter((gp) => gp.team === 1);
@@ -70,7 +70,7 @@ export default function SpectatorScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-8 max-w-md mx-auto text-center">
-      <p className="text-xs uppercase tracking-[0.2em] text-[#FAEEDA]/50 mb-2 flex items-center gap-2">
+      <p className="text-xs uppercase tracking-[0.2em] text-ink/50 mb-2 flex items-center gap-2">
         <span
           className="w-2 h-2 rounded-full"
           style={{ background: connected ? '#22C55E' : '#EF4444' }}
@@ -101,10 +101,10 @@ export default function SpectatorScreen() {
         />
       </div>
 
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">First to {game.targetScore}</p>
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">First to {game.targetScore}</p>
       {round && (
-        <div className="w-full p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15 text-sm">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">
+        <div className="w-full p-3 rounded-2xl bg-surface border border-ink/15 text-sm">
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">
             Round {round.roundNumber} &middot; {round.bagThrows?.length || 0}/8 thrown
           </p>
           <p>
@@ -112,7 +112,7 @@ export default function SpectatorScreen() {
             {' '}&middot;{' '}
             <span style={{ color: team2Hex }}>T2: {round.team2RoundScore}</span>
           </p>
-          <p className="text-xs text-[#FAEEDA]/60 mt-1">
+          <p className="text-xs text-ink/60 mt-1">
             {round.netPoints === 0
               ? 'Tied this round'
               : `+${round.netPoints} pending to Team ${round.scoringTeam}`}
@@ -130,13 +130,13 @@ function ScoreCard({ label, score, colour, highlight }) {
     <div
       className={
         'rounded-2xl p-3 border ' +
-        (highlight ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        (highlight ? 'border-ink' : 'border-ink/20')
       }
       style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
       <div className="flex items-center gap-2 justify-center">
         <span className="w-3 h-3 rounded-full" style={{ background: colour }} />
-        <span className="text-xs uppercase tracking-wider text-[#FAEEDA]/70 truncate">{label}</span>
+        <span className="text-xs uppercase tracking-wider text-ink/70 truncate">{label}</span>
       </div>
       <div className="text-4xl font-black mt-1" style={{ color: colour }}>
         {score}

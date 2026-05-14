@@ -15,7 +15,7 @@ export default function GameDetailScreen() {
   }, [id]);
 
   if (!game) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const team1 = game.players.filter((gp) => gp.team === 1);
@@ -32,7 +32,7 @@ export default function GameDetailScreen() {
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto pb-12">
       <header className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">Game replay</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60">Game replay</p>
           <h1 className="text-xl font-bold tracking-tight">{date}</h1>
         </div>
         <GhostButton onClick={() => navigate('/history')}>Back</GhostButton>
@@ -64,15 +64,15 @@ export default function GameDetailScreen() {
             label: String(i + 1),
           }));
           return (
-            <section key={r.id} className="border-t border-[#FAEEDA]/10 pt-4">
+            <section key={r.id} className="border-t border-ink/10 pt-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold">
                   Round {r.roundNumber}
-                  <span className="text-[#FAEEDA]/60 font-normal ml-2">
+                  <span className="text-ink/60 font-normal ml-2">
                     ({r.throwingPair === 1 ? 'End A' : 'End B'} pair)
                   </span>
                 </h2>
-                <span className="text-xs text-[#FAEEDA]/60">
+                <span className="text-xs text-ink/60">
                   T1 {r.team1RoundScore} &middot; T2 {r.team2RoundScore}
                 </span>
               </div>
@@ -95,19 +95,19 @@ function TeamHead({ names, score, colour, winner }) {
     <div
       className={
         'rounded-2xl p-3 border ' +
-        (winner ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        (winner ? 'border-ink' : 'border-ink/20')
       }
       style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
       <div className="flex items-center gap-2">
         <span className="w-3 h-3 rounded-full" style={{ background: colour }} />
-        <span className="text-xs uppercase tracking-wider text-[#FAEEDA]/70 truncate">
+        <span className="text-xs uppercase tracking-wider text-ink/70 truncate">
           {names.join(' & ')}
         </span>
       </div>
       <div className="text-3xl font-bold mt-1" style={{ color: colour }}>{score}</div>
       {winner && (
-        <p className="text-[10px] uppercase tracking-wider text-[#FAEEDA] mt-1">Winner</p>
+        <p className="text-[10px] uppercase tracking-wider text-ink mt-1">Winner</p>
       )}
     </div>
   );

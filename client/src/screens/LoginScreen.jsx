@@ -31,18 +31,18 @@ export default function LoginScreen() {
       <h1 className="text-3xl font-bold mb-8 tracking-tight">PT Cornhole</h1>
       <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-4">
         <label className="flex flex-col gap-1">
-          <span className="text-sm text-[#FAEEDA]/80">Username</span>
+          <span className="text-sm text-ink/80">Username</span>
           <input
             type="text"
             autoComplete="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="min-h-[48px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60"
+            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60"
             required
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm text-[#FAEEDA]/80">PIN (4 digits)</span>
+          <span className="text-sm text-ink/80">PIN (4 digits)</span>
           <input
             type="password"
             inputMode="numeric"
@@ -51,7 +51,7 @@ export default function LoginScreen() {
             autoComplete="current-password"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            className="min-h-[48px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60 tracking-[0.5em] text-center"
+            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60 tracking-[0.5em] text-center"
             required
           />
         </label>
@@ -61,14 +61,14 @@ export default function LoginScreen() {
         </PrimaryButton>
       </form>
       <div className="mt-6 flex flex-col items-center gap-1">
-        <Link to="/register" className="text-sm text-[#FAEEDA] underline underline-offset-2">
+        <Link to="/register" className="text-sm text-ink underline underline-offset-2">
           Create account
         </Link>
         <GhostButton type="button" onClick={() => setShowForgot((s) => !s)}>
           Forgotten PIN?
         </GhostButton>
         {showForgot && (
-          <p className="text-xs text-[#FAEEDA]/70 max-w-xs text-center mt-1">
+          <p className="text-xs text-ink/70 max-w-xs text-center mt-1">
             Ask the admin to reset your PIN.
           </p>
         )}

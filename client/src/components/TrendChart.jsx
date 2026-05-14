@@ -8,7 +8,7 @@ const PAD_B = 18;
 export default function TrendChart({ trend = [] }) {
   if (!trend || trend.length === 0) {
     return (
-      <div className="rounded-xl bg-[#082F58] border border-[#FAEEDA]/15 p-4 text-center text-sm text-[#FAEEDA]/60">
+      <div className="rounded-xl bg-surface border border-ink/15 p-4 text-center text-sm text-ink/60">
         Play a few games to see your accuracy trend.
       </div>
     );
@@ -29,7 +29,7 @@ export default function TrendChart({ trend = [] }) {
   const gridYValues = [0, Math.round(max / 2), Math.round(max)];
 
   return (
-    <div className="rounded-xl bg-[#082F58] border border-[#FAEEDA]/15 p-3">
+    <div className="rounded-xl bg-surface border border-ink/15 p-3">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
         {gridYValues.map((v) => (
           <g key={v}>
@@ -38,7 +38,7 @@ export default function TrendChart({ trend = [] }) {
               x2={W - PAD_R}
               y1={yFor(v)}
               y2={yFor(v)}
-              stroke="#FAEEDA"
+              stroke="currentColor"
               strokeOpacity="0.12"
             />
             <text
@@ -46,7 +46,7 @@ export default function TrendChart({ trend = [] }) {
               y={yFor(v) + 3}
               textAnchor="end"
               fontSize="8"
-              fill="#FAEEDA"
+              fill="currentColor"
               opacity="0.55"
             >
               {v}%
@@ -76,7 +76,7 @@ export default function TrendChart({ trend = [] }) {
           x={PAD_L}
           y={H - 4}
           fontSize="8"
-          fill="#FAEEDA"
+          fill="currentColor"
           opacity="0.55"
         >
           Earliest
@@ -85,14 +85,14 @@ export default function TrendChart({ trend = [] }) {
           x={W - PAD_R}
           y={H - 4}
           fontSize="8"
-          fill="#FAEEDA"
+          fill="currentColor"
           opacity="0.55"
           textAnchor="end"
         >
           Latest
         </text>
       </svg>
-      <div className="flex items-center gap-3 mt-1 text-[10px] uppercase tracking-wider text-[#FAEEDA]/60">
+      <div className="flex items-center gap-3 mt-1 text-[10px] uppercase tracking-wider text-ink/60">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-[#FFD700]" /> Competitive
         </span>

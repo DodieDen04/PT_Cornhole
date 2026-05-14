@@ -32,20 +32,20 @@ export default function GroupsListScreen() {
       </PrimaryButton>
 
       {loading ? (
-        <p className="text-sm text-[#FAEEDA]/70">Loading...</p>
+        <p className="text-sm text-ink/70">Loading...</p>
       ) : groups.length === 0 ? (
-        <p className="text-sm text-[#FAEEDA]/70">You're not in any groups yet.</p>
+        <p className="text-sm text-ink/70">You're not in any groups yet.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {groups.map((g) => (
             <li
               key={g.id}
               onClick={() => navigate(`/groups/${g.id}`)}
-              className="p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15 cursor-pointer hover:border-[#FAEEDA]/40 flex items-center gap-2"
+              className="p-3 rounded-2xl bg-surface border border-ink/15 cursor-pointer hover:border-ink/40 flex items-center gap-2"
             >
               <div className="flex-1">
                 <p className="font-semibold">{g.name}</p>
-                <p className="text-xs text-[#FAEEDA]/70 mt-0.5">
+                <p className="text-xs text-ink/70 mt-0.5">
                   {g.memberCount ?? 0} member{(g.memberCount ?? 0) === 1 ? '' : 's'}
                 </p>
               </div>
@@ -54,7 +54,7 @@ export default function GroupsListScreen() {
                   Admin
                 </span>
               )}
-              <span className="text-[#FAEEDA]/40 ml-1">›</span>
+              <span className="text-ink/40 ml-1">›</span>
             </li>
           ))}
         </ul>

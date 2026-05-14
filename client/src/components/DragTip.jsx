@@ -23,13 +23,13 @@ export default function DragTip() {
   return (
     <button
       onClick={dismiss}
-      className="w-full mb-2 px-3 py-2 rounded-xl bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FAEEDA] text-xs flex items-center gap-2 active:opacity-80"
+      className="w-full mb-2 px-3 py-2 rounded-xl bg-[#FFD700]/15 border border-[#FFD700]/40 text-ink text-xs flex items-center gap-2 active:opacity-80"
     >
       <span aria-hidden>👆</span>
       <span className="flex-1 text-left">
         Tip: touch and drag any bag to move it (if a later throw knocks it).
       </span>
-      <span className="text-[#FAEEDA]/60">✕</span>
+      <span className="text-ink/60">✕</span>
     </button>
   );
 }

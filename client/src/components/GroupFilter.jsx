@@ -26,7 +26,7 @@ export default function GroupFilter({ value, onChange, allLabel = 'All Games' })
         ))}
       </div>
       {activeName && (
-        <p className="text-xs text-[#FAEEDA]/60 mt-1">Filtered: {activeName}</p>
+        <p className="text-xs text-ink/60 mt-1">Filtered: {activeName}</p>
       )}
     </div>
   );
@@ -39,8 +39,8 @@ function Chip({ label, active, onClick }) {
       className={
         'shrink-0 min-h-[36px] px-3 rounded-full text-xs font-semibold whitespace-nowrap transition ' +
         (active
-          ? 'bg-[#FAEEDA] text-[#0C447C]'
-          : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+          ? 'bg-ink text-page'
+          : 'bg-surface text-ink border border-ink/20')
       }
     >
       {label}

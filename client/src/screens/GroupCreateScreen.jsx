@@ -36,7 +36,7 @@ export default function GroupCreateScreen() {
         <GhostButton onClick={() => navigate('/groups')}>Cancel</GhostButton>
       </header>
 
-      <p className="text-xs text-[#FAEEDA]/70 mb-3">
+      <p className="text-xs text-ink/70 mb-3">
         Pick a name (1 to 30 characters). You'll be the admin and can invite players next.
       </p>
 
@@ -46,7 +46,7 @@ export default function GroupCreateScreen() {
         onChange={(e) => setName(e.target.value)}
         placeholder="Group name"
         maxLength={30}
-        className="w-full min-h-[48px] px-4 rounded-xl bg-[#082F58] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none focus:border-[#FAEEDA]/60 mb-3"
+        className="w-full min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60 mb-3"
       />
 
       {error && <p className="text-sm text-[#EF4444] mb-3">{error}</p>}

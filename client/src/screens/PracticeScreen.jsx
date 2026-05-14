@@ -163,7 +163,7 @@ export default function PracticeScreen() {
     );
   }
   if (!game) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const upcomingPlayer = upcoming ? players.find((gp) => gp.playerId === upcoming.playerId)?.player : null;
@@ -186,9 +186,9 @@ export default function PracticeScreen() {
       <header className="flex items-center justify-between mb-2">
         <PTLogo className="h-7" />
         <div className="text-center flex-1 mx-2">
-          <p className="text-sm uppercase tracking-wider text-[#FAEEDA]/70">Practice</p>
+          <p className="text-sm uppercase tracking-wider text-ink/70">Practice</p>
           {game.practiceTag && (
-            <p className="text-[10px] text-[#FAEEDA]/60 truncate">{game.practiceTag}</p>
+            <p className="text-[10px] text-ink/60 truncate">{game.practiceTag}</p>
           )}
         </div>
         <GhostButton onClick={() => setShowEnd(true)}>End</GhostButton>
@@ -214,7 +214,7 @@ export default function PracticeScreen() {
       <div className="text-center mb-2 min-h-[24px]">
         {upcomingPlayer ? (
           <p className="text-sm">
-            <span className="text-[#FAEEDA]/60">Now throwing: </span>
+            <span className="text-ink/60">Now throwing: </span>
             <span className="font-semibold">{upcomingPlayer.username}</span>
             <span
               className="inline-block w-3 h-3 rounded-full ml-2 align-middle"
@@ -222,7 +222,7 @@ export default function PracticeScreen() {
             />
           </p>
         ) : (
-          <p className="text-sm font-semibold text-[#FAEEDA]/80">Set ready, tap Bank</p>
+          <p className="text-sm font-semibold text-ink/80">Set ready, tap Bank</p>
         )}
       </div>
 
@@ -262,7 +262,7 @@ export default function PracticeScreen() {
       {showEnd && (
         <Modal>
           <h3 className="text-lg font-semibold mb-2">End practice?</h3>
-          <p className="text-sm text-[#FAEEDA]/80 mb-4">
+          <p className="text-sm text-ink/80 mb-4">
             The session will be saved with all banked sets. Pending throws are discarded.
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -282,13 +282,13 @@ function PracticeCard({ label, colour, thrown, total, highlight }) {
     <div
       className={
         'rounded-2xl px-3 py-2 border ' +
-        (highlight ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        (highlight ? 'border-ink' : 'border-ink/20')
       }
       style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
       <div className="flex items-center gap-1.5">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colour }} />
-        <span className="text-xs uppercase tracking-wider text-[#FAEEDA]/70 truncate">{label}</span>
+        <span className="text-xs uppercase tracking-wider text-ink/70 truncate">{label}</span>
       </div>
       <div className="flex gap-1 mt-1.5 flex-wrap">
         {Array.from({ length: total }).map((_, i) => (
@@ -318,7 +318,7 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
   return (
     <div className="fixed inset-0 bg-black/75 z-40 flex items-center justify-center p-4">
       <div
-        className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl flex flex-col"
+        className="w-full max-w-sm rounded-2xl bg-surface-2 border border-ink/25 p-5 shadow-2xl flex flex-col"
         style={{ maxHeight: 'calc(100dvh - 2rem)' }}
       >
         <h3 className="text-base font-bold text-center mb-3">
@@ -326,7 +326,7 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
         </h3>
 
         <div className="overflow-y-auto -mx-1 px-1 mb-3">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">This set</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">This set</p>
           <div className="flex flex-col gap-1.5 mb-3">
             {players.map((gp) => {
               const throws = byPlayer[gp.playerId] || [];
@@ -344,7 +344,7 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
                     />
                     {gp.player.username}
                   </p>
-                  <ol className="space-y-0.5 pl-5 list-decimal text-[#FAEEDA]/80 text-xs">
+                  <ol className="space-y-0.5 pl-5 list-decimal text-ink/80 text-xs">
                     {labels.map((l, i) => (
                       <li key={i}>{l}</li>
                     ))}
@@ -356,7 +356,7 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
 
           {stats && (
             <>
-              <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">Session totals</p>
+              <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">Session totals</p>
               <div className="flex flex-col gap-1 text-sm mb-3">
                 {players.map((gp) => {
                   const s = stats[gp.playerId];
@@ -370,12 +370,12 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
                           style={{ background: BAG_HEX[gp.bagColour] }}
                         />
                         <strong>{s.username}</strong>
-                        <span className="text-[#FAEEDA]/70">
+                        <span className="text-ink/70">
                           {' '}
                           &middot; {s.sets} set{s.sets === 1 ? '' : 's'} &middot; {s.total} throws
                         </span>
                       </p>
-                      <p className="text-[#FAEEDA]/70 pl-4">
+                      <p className="text-ink/70 pl-4">
                         Cornholes {s.cornhole} ({pct(s.cornhole)}) &middot; Board {s.board} ({pct(s.board)}) &middot;
                         Off {s.off} ({pct(s.off)})
                       </p>
@@ -388,10 +388,10 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
 
           {sessionThrows.length > 0 && (
             <>
-              <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-1">Session heatmap</p>
+              <p className="text-xs uppercase tracking-wider text-ink/60 mb-1">Session heatmap</p>
               <Heatmap throws={sessionThrows} />
               <HeatmapLegend />
-              <p className="text-[10px] text-[#FAEEDA]/50 text-center mt-1">
+              <p className="text-[10px] text-ink/50 text-center mt-1">
                 {sessionThrows.length} throws so far
               </p>
             </>
@@ -403,7 +403,7 @@ function BankSetPopup({ set, players, stats, sessionThrows, onNext, onEnd }) {
         </PrimaryButton>
         <button
           onClick={onEnd}
-          className="w-full mt-3 text-xs text-[#FAEEDA]/55 underline underline-offset-4"
+          className="w-full mt-3 text-xs text-ink/55 underline underline-offset-4"
         >
           End practice
         </button>
@@ -435,7 +435,7 @@ function computeStats(game) {
 function Modal({ children }) {
   return (
     <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#0C447C] border border-[#FAEEDA]/25 p-5 shadow-2xl">
+      <div className="w-full max-w-sm rounded-2xl bg-surface-2 border border-ink/25 p-5 shadow-2xl">
         {children}
       </div>
     </div>

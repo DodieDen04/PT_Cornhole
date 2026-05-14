@@ -14,13 +14,28 @@
 }
 
 :root, :root[data-theme="dark"] {
-  --color-page: #0C447C;
-  --color-page-text: #FAEEDA;
+  --pt-page: #0C447C;
+  --pt-surface: #082F58;
+  --pt-surface-2: #0C447C;
+  --pt-ink: #FAEEDA;
 }
 
 :root[data-theme="light"] {
-  --color-page: #FAEEDA;
-  --color-page-text: #0C447C;
+  --pt-page: #FAEEDA;
+  --pt-surface: #FFFFFF;
+  --pt-surface-2: #FAEEDA;
+  --pt-ink: #0C447C;
+}
+
+@theme inline {
+  --color-page: var(--pt-page);
+  --color-surface: var(--pt-surface);
+  --color-surface-2: var(--pt-surface-2);
+  --color-ink: var(--pt-ink);
+}
+
+:root {
+  --color-page-text: var(--pt-ink);
 }
 
 html, body, #root {

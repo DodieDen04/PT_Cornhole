@@ -33,20 +33,20 @@ export default function InstallPrompt() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-3 inset-x-3 z-40 max-w-md mx-auto p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/30 shadow-lg flex items-center gap-3">
+    <div className="fixed bottom-3 inset-x-3 z-40 max-w-md mx-auto p-3 rounded-2xl bg-surface border border-ink/30 shadow-lg flex items-center gap-3">
       <div className="flex-1">
         <p className="text-sm font-semibold">Install PT Cornhole</p>
-        <p className="text-xs text-[#FAEEDA]/70">Add to home screen for full-screen play.</p>
+        <p className="text-xs text-ink/70">Add to home screen for full-screen play.</p>
       </div>
       <button
         onClick={dismiss}
-        className="min-h-[36px] px-3 rounded-lg text-sm text-[#FAEEDA]/70"
+        className="min-h-[36px] px-3 rounded-lg text-sm text-ink/70"
       >
         Not now
       </button>
       <button
         onClick={install}
-        className="min-h-[36px] px-3 rounded-lg text-sm font-semibold bg-[#FAEEDA] text-[#0C447C]"
+        className="min-h-[36px] px-3 rounded-lg text-sm font-semibold bg-ink text-page"
       >
         Install
       </button>

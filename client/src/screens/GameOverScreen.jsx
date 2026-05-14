@@ -27,7 +27,7 @@ export default function GameOverScreen() {
   }, [game, winnerHex]);
 
   if (!game) {
-    return <div className="min-h-screen flex items-center justify-center text-[#FAEEDA]/70">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-ink/70">Loading...</div>;
   }
 
   const team1 = game.players.filter((gp) => gp.team === 1);
@@ -37,7 +37,7 @@ export default function GameOverScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-5 py-8 max-w-md mx-auto text-center">
-      <p className="text-xs uppercase tracking-[0.2em] text-[#FAEEDA]/60 mb-2">Game over</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-ink/60 mb-2">Game over</p>
 
       {winning ? (
         <>
@@ -51,7 +51,7 @@ export default function GameOverScreen() {
           >
             WINNERS!
           </h1>
-          <p className="text-lg font-semibold text-[#FAEEDA] mb-6">
+          <p className="text-lg font-semibold text-ink mb-6">
             {winners.map((w) => w.player.username).join(' & ')}
           </p>
         </>
@@ -80,7 +80,7 @@ export default function GameOverScreen() {
 
       {stats && (
         <div className="w-full mb-8">
-          <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Highlights</p>
+          <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Highlights</p>
           <div className="grid grid-cols-2 gap-2">
             <StatTile label="Rounds" value={stats.rounds} />
             <StatTile label="Total throws" value={stats.totalThrows} />
@@ -107,15 +107,15 @@ export default function GameOverScreen() {
             />
           </div>
           {stats.topThrower && (
-            <div className="mt-2 p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15 text-left">
-              <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">Top thrower</p>
+            <div className="mt-2 p-3 rounded-2xl bg-surface border border-ink/15 text-left">
+              <p className="text-xs uppercase tracking-wider text-ink/60">Top thrower</p>
               <p className="text-base font-semibold mt-1">
                 <span
                   className="inline-block w-2.5 h-2.5 rounded-full mr-2 align-middle"
                   style={{ background: stats.topThrower.team === 1 ? team1Hex : team2Hex }}
                 />
                 {stats.topThrower.username}
-                <span className="text-[#FAEEDA]/70 font-normal text-sm">
+                <span className="text-ink/70 font-normal text-sm">
                   {' '}
                   &middot; {stats.topThrower.cornholes} cornhole{stats.topThrower.cornholes === 1 ? '' : 's'}
                 </span>
@@ -140,18 +140,18 @@ function ScoreBox({ label, score, target, colour, winner }) {
     <div
       className={
         'rounded-2xl p-4 border ' +
-        (winner ? 'border-[#FAEEDA]' : 'border-[#FAEEDA]/20')
+        (winner ? 'border-ink' : 'border-ink/20')
       }
       style={{
         background: 'rgba(8, 47, 88, 0.7)',
         boxShadow: winner ? `0 0 20px ${colour}55` : undefined,
       }}
     >
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/70 truncate">{label}</p>
+      <p className="text-xs uppercase tracking-wider text-ink/70 truncate">{label}</p>
       <p className="text-5xl font-black mt-1" style={{ color: colour }}>
         {score}
       </p>
-      <p className="text-[10px] uppercase tracking-wider text-[#FAEEDA]/50 mt-1">
+      <p className="text-[10px] uppercase tracking-wider text-ink/50 mt-1">
         of {target}
       </p>
     </div>
@@ -160,8 +160,8 @@ function ScoreBox({ label, score, target, colour, winner }) {
 
 function StatTile({ label, value, colour1, colour2 }) {
   return (
-    <div className="rounded-xl p-3 bg-[#082F58] border border-[#FAEEDA]/15 text-left">
-      <p className="text-xs uppercase tracking-wider text-[#FAEEDA]/60">{label}</p>
+    <div className="rounded-xl p-3 bg-surface border border-ink/15 text-left">
+      <p className="text-xs uppercase tracking-wider text-ink/60">{label}</p>
       <p
         className="text-xl font-bold mt-0.5"
         style={
@@ -172,7 +172,7 @@ function StatTile({ label, value, colour1, colour2 }) {
                 backgroundClip: 'text',
                 color: 'transparent',
               }
-            : { color: colour1 || '#FAEEDA' }
+            : { color: colour1 || 'var(--pt-ink)' }
         }
       >
         {value}

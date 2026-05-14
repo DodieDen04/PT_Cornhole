@@ -6,21 +6,20 @@ import { BAG_HEX } from '../constants/colours.js';
 import { toCsv, downloadCsv } from '../lib/csv.js';
 
 const FILTERS = [
-  { label: 'All', mode: null },
-  { label: 'Competitive', mode: 'COMPETITIVE' },
+  { label: 'Matches', mode: 'COMPETITIVE' },
   { label: 'Practice', mode: 'PRACTICE' },
 ];
 
 export default function HistoryScreen() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState(null);
+  const [filter, setFilter] = useState('COMPETITIVE');
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (filter) params.set('mode', filter);
+    params.set('mode', filter);
     api(`/api/games?${params.toString()}`)
       .then((d) => setGames(d.games))
       .catch(() => {})
@@ -75,8 +74,8 @@ export default function HistoryScreen() {
             className={
               'flex-1 min-h-[40px] rounded-xl text-sm font-semibold ' +
               (filter === f.mode
-                ? 'bg-[#FAEEDA] text-[#0C447C]'
-                : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                ? 'bg-ink text-page'
+                : 'bg-surface text-ink border border-ink/20')
             }
           >
             {f.label}
@@ -85,9 +84,9 @@ export default function HistoryScreen() {
       </div>
 
       {loading ? (
-        <p className="text-[#FAEEDA]/70 text-sm">Loading...</p>
+        <p className="text-ink/70 text-sm">Loading...</p>
       ) : games.length === 0 ? (
-        <p className="text-[#FAEEDA]/70 text-sm">No games yet.</p>
+        <p className="text-ink/70 text-sm">No games yet.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {games.map((g) => (
@@ -99,8 +98,8 @@ export default function HistoryScreen() {
                 else navigate(`/history/practice/${g.id}`);
               }}
               className={
-                'p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15 ' +
-                (g.status === 'COMPLETED' ? 'cursor-pointer hover:border-[#FAEEDA]/40' : 'opacity-70')
+                'p-3 rounded-2xl bg-surface border border-ink/15 ' +
+                (g.status === 'COMPLETED' ? 'cursor-pointer hover:border-ink/40' : 'opacity-70')
               }
             >
               {g.mode === 'COMPETITIVE' ? (
@@ -127,12 +126,12 @@ function CompetitiveRow({ game }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-[#FAEEDA]/60">{date}</span>
+        <span className="text-xs text-ink/60">{date}</span>
         <StatusTag status={game.status} />
       </div>
       <div className="flex items-center justify-between gap-2">
         <TeamLabel hex={t1Hex} winner={winning === 1} names={t1.map((p) => p.player.username)} score={result?.team1Score} />
-        <span className="text-[#FAEEDA]/40 text-xs">vs</span>
+        <span className="text-ink/40 text-xs">vs</span>
         <TeamLabel hex={t2Hex} winner={winning === 2} names={t2.map((p) => p.player.username)} score={result?.team2Score} />
       </div>
     </div>
@@ -144,7 +143,7 @@ function TeamLabel({ hex, winner, names, score }) {
     <div className="flex-1 text-sm">
       <div className="flex items-center gap-1.5">
         <span className="w-2.5 h-2.5 rounded-full" style={{ background: hex }} />
-        {winner && <span className="text-xs uppercase font-bold text-[#FAEEDA]">won</span>}
+        {winner && <span className="text-xs uppercase font-bold text-ink">won</span>}
       </div>
       <p className="truncate" style={{ color: hex }}>{names.join(' & ')}</p>
       {score != null && <p className="text-2xl font-bold" style={{ color: hex }}>{score}</p>}
@@ -158,12 +157,12 @@ function PracticeRow({ game }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-[#FAEEDA]/60">{date}</span>
+        <span className="text-xs text-ink/60">{date}</span>
         <StatusTag status={game.status} />
       </div>
       <p className="text-sm font-medium">Practice &middot; {playerNames}</p>
       {game.practiceTag && (
-        <p className="text-xs text-[#FAEEDA]/70">Tag: {game.practiceTag}</p>
+        <p className="text-xs text-ink/70">Tag: {game.practiceTag}</p>
       )}
     </div>
   );
@@ -171,7 +170,7 @@ function PracticeRow({ game }) {
 
 function StatusTag({ status }) {
   const map = {
-    IN_PROGRESS: { label: 'In progress', cls: 'bg-[#FAEEDA]/20 text-[#FAEEDA]' },
+    IN_PROGRESS: { label: 'In progress', cls: 'bg-ink/20 text-ink' },
     COMPLETED: { label: 'Completed', cls: 'bg-[#22C55E]/20 text-[#22C55E]' },
     ABANDONED: { label: 'Abandoned', cls: 'bg-[#EF4444]/20 text-[#EF4444]' },
   };

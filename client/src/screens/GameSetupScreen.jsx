@@ -173,7 +173,7 @@ export default function GameSetupScreen() {
       </header>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Format</h2>
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Format</h2>
         <div className="flex gap-2">
           {TEAM_SIZES.map((t) => (
             <button
@@ -182,8 +182,8 @@ export default function GameSetupScreen() {
               className={
                 'flex-1 min-h-[44px] rounded-xl font-semibold transition ' +
                 (teamSize === t.size
-                  ? 'bg-[#FAEEDA] text-[#0C447C]'
-                  : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                  ? 'bg-ink text-page'
+                  : 'bg-surface text-ink border border-ink/20')
               }
             >
               {t.label}
@@ -194,7 +194,7 @@ export default function GameSetupScreen() {
 
       {groups.length > 0 && (
         <section className="mb-6">
-          <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Group</h2>
+          <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Group</h2>
           <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
             <GroupChip
               label="All"
@@ -211,7 +211,7 @@ export default function GameSetupScreen() {
             ))}
           </div>
           {activeGroupId && (
-            <p className="text-xs text-[#FAEEDA]/60 mt-1">
+            <p className="text-xs text-ink/60 mt-1">
               Showing only members of this group.
             </p>
           )}
@@ -219,7 +219,7 @@ export default function GameSetupScreen() {
       )}
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">
           Your team {teamSize === 2 ? '(Team 1)' : ''}
         </h2>
         <PlayerCard
@@ -230,10 +230,10 @@ export default function GameSetupScreen() {
         />
         {teamSize === 2 && (
           <div className="mt-3">
-            <p className="text-xs text-[#FAEEDA]/60 mb-2">Pick teammate:</p>
+            <p className="text-xs text-ink/60 mb-2">Pick teammate:</p>
             <div className="flex flex-col gap-2">
               {teammateOption.length === 0 ? (
-                <p className="text-xs text-[#FAEEDA]/50 italic">No other players available.</p>
+                <p className="text-xs text-ink/50 italic">No other players available.</p>
               ) : (
                 teammateOption.map((p) => (
                   <PlayerCard
@@ -253,25 +253,25 @@ export default function GameSetupScreen() {
 
       <section className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60">
+          <h2 className="text-sm uppercase tracking-wider text-ink/60">
             {teamSize === 1 ? 'Opponent' : 'Opponents (Team 2)'}
           </h2>
           <button
             onClick={() => setShowQuickAdd((s) => !s)}
-            className="text-xs font-semibold text-[#FAEEDA] underline underline-offset-4"
+            className="text-xs font-semibold text-ink underline underline-offset-4"
           >
             {showQuickAdd ? 'Cancel' : '+ Add guest'}
           </button>
         </div>
-        <p className="text-xs text-[#FAEEDA]/60 mb-2">
+        <p className="text-xs text-ink/60 mb-2">
           {teamSize === 1
             ? 'Tap a player to choose your opponent.'
             : 'Pick two opponents.'}
         </p>
 
         {showQuickAdd && (
-          <div className="mb-3 p-3 rounded-xl bg-[#082F58] border border-[#FAEEDA]/30">
-            <p className="text-xs text-[#FAEEDA]/70 mb-2">
+          <div className="mb-3 p-3 rounded-xl bg-surface border border-ink/30">
+            <p className="text-xs text-ink/70 mb-2">
               Quick add a non-registered player. They can play and accumulate stats.
             </p>
             <div className="flex gap-2">
@@ -280,12 +280,12 @@ export default function GameSetupScreen() {
                 onChange={(e) => setGuestName(e.target.value)}
                 placeholder="Display name"
                 maxLength={30}
-                className="flex-1 min-h-[40px] px-3 rounded-lg bg-[#0C447C] border border-[#FAEEDA]/20 text-[#FAEEDA] outline-none text-sm"
+                className="flex-1 min-h-[40px] px-3 rounded-lg bg-surface-2 border border-ink/20 text-ink outline-none text-sm"
               />
               <button
                 onClick={createGuest}
                 disabled={creatingGuest || !guestName.trim()}
-                className="min-h-[40px] px-3 rounded-lg bg-[#FAEEDA] text-[#0C447C] font-semibold text-sm disabled:opacity-50"
+                className="min-h-[40px] px-3 rounded-lg bg-ink text-page font-semibold text-sm disabled:opacity-50"
               >
                 {creatingGuest ? '...' : 'Create'}
               </button>
@@ -295,7 +295,7 @@ export default function GameSetupScreen() {
 
         <div className="flex flex-col gap-2">
           {opponentOptions.length === 0 ? (
-            <p className="text-xs text-[#FAEEDA]/50 italic">No other players available.</p>
+            <p className="text-xs text-ink/50 italic">No other players available.</p>
           ) : (
             opponentOptions.map((p) => (
               <PlayerCard
@@ -312,7 +312,7 @@ export default function GameSetupScreen() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Bag colours</h2>
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Bag colours</h2>
         <ColourRow
           label="Team 1"
           value={team1Colour}
@@ -328,7 +328,7 @@ export default function GameSetupScreen() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-[#FAEEDA]/60 mb-2">Target score</h2>
+        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Target score</h2>
         <div className="flex gap-2">
           {TARGETS.map((t) => (
             <button
@@ -337,8 +337,8 @@ export default function GameSetupScreen() {
               className={
                 'flex-1 min-h-[44px] rounded-xl font-semibold ' +
                 (target === t
-                  ? 'bg-[#FAEEDA] text-[#0C447C]'
-                  : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+                  ? 'bg-ink text-page'
+                  : 'bg-surface text-ink border border-ink/20')
               }
             >
               {t}
@@ -365,7 +365,7 @@ function PlayerCard({ label, selected, locked, teamColour, isGuest, onClick }) {
       <div
         className={
           baseClasses +
-          ' bg-[#082F58] border border-[#FAEEDA]/40'
+          ' bg-surface border border-ink/40'
         }
       >
         {teamColour && (
@@ -383,8 +383,8 @@ function PlayerCard({ label, selected, locked, teamColour, isGuest, onClick }) {
       className={
         baseClasses +
         (selected
-          ? ' bg-[#FAEEDA] text-[#0C447C] border border-[#FAEEDA]'
-          : ' bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20 active:scale-[0.99]')
+          ? ' bg-ink text-page border border-ink'
+          : ' bg-surface text-ink border border-ink/20 active:scale-[0.99]')
       }
     >
       {teamColour && (
@@ -404,8 +404,8 @@ function GroupChip({ label, active, onClick }) {
       className={
         'shrink-0 min-h-[36px] px-3 rounded-full text-xs font-semibold whitespace-nowrap transition ' +
         (active
-          ? 'bg-[#FAEEDA] text-[#0C447C]'
-          : 'bg-[#082F58] text-[#FAEEDA] border border-[#FAEEDA]/20')
+          ? 'bg-ink text-page'
+          : 'bg-surface text-ink border border-ink/20')
       }
     >
       {label}
@@ -419,8 +419,8 @@ function GuestBadge({ selected }) {
       className={
         'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full ' +
         (selected
-          ? 'bg-[#0C447C]/15 text-[#0C447C] border border-[#0C447C]/30'
-          : 'bg-[#FAEEDA]/15 text-[#FAEEDA]/80 border border-[#FAEEDA]/30')
+          ? 'bg-surface-2/15 text-page border border-surface-2/30'
+          : 'bg-ink/15 text-ink/80 border border-ink/30')
       }
     >
       Guest
@@ -431,7 +431,7 @@ function GuestBadge({ selected }) {
 function ColourRow({ label, value, disabled, onChange }) {
   return (
     <div className="mb-2">
-      <p className="text-xs text-[#FAEEDA]/70 mb-1">{label}</p>
+      <p className="text-xs text-ink/70 mb-1">{label}</p>
       <div className="flex gap-2">
         {BAG_COLOURS.map((c) => {
           const isSelected = value === c;
@@ -443,13 +443,13 @@ function ColourRow({ label, value, disabled, onChange }) {
               disabled={isDisabled}
               className={
                 'flex-1 min-h-[44px] rounded-xl border-2 flex items-center justify-center ' +
-                (isSelected ? 'border-[#FAEEDA]' : 'border-transparent') +
+                (isSelected ? 'border-ink' : 'border-transparent') +
                 (isDisabled ? ' opacity-30' : '')
               }
               style={{ background: BAG_HEX[c] }}
               aria-label={BAG_LABEL[c]}
             >
-              {isSelected && <span className="text-[#0C447C] font-bold">✓</span>}
+              {isSelected && <span className="text-page font-bold">✓</span>}
             </button>
           );
         })}

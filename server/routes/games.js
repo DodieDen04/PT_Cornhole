@@ -7,6 +7,23 @@ const router = express.Router();
 
 const VALID_COLOURS = ['YELLOW', 'RED', 'BLUE', 'GREEN'];
 
+const ABANDONED_PRACTICE_AGE_MS = 24 * 60 * 60 * 1000;
+const CLEANUP_DEBOUNCE_MS = 5 * 60 * 1000;
+let lastCleanupAt = 0;
+
+async function cleanupAbandonedPractices() {
+  const now = Date.now();
+  if (now - lastCleanupAt < CLEANUP_DEBOUNCE_MS) return;
+  lastCleanupAt = now;
+  await prisma.game.deleteMany({
+    where: {
+      mode: 'PRACTICE',
+      status: 'IN_PROGRESS',
+      updatedAt: { lt: new Date(now - ABANDONED_PRACTICE_AGE_MS) },
+    },
+  });
+}
+
 function isTwoVsTwo(gamePlayers) {
   return gamePlayers.length === 4;
 }
@@ -155,11 +172,13 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 router.get('/', authenticate, async (req, res) => {
-  const { status, mode, playerId } = req.query;
-  const where = {};
+  await cleanupAbandonedPractices().catch(() => {});
+  const { status, mode } = req.query;
+  const where = {
+    players: { some: { playerId: req.player.id } },
+  };
   if (status) where.status = status;
   if (mode) where.mode = mode;
-  if (playerId) where.players = { some: { playerId } };
   const games = await prisma.game.findMany({
     where,
     orderBy: { createdAt: 'desc' },

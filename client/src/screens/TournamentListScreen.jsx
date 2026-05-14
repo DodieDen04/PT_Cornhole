@@ -27,19 +27,19 @@ export default function TournamentListScreen() {
       </PrimaryButton>
 
       {loading ? (
-        <p className="text-[#FAEEDA]/70 text-sm">Loading...</p>
+        <p className="text-ink/70 text-sm">Loading...</p>
       ) : tournaments.length === 0 ? (
-        <p className="text-[#FAEEDA]/70 text-sm">No tournaments yet.</p>
+        <p className="text-ink/70 text-sm">No tournaments yet.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {tournaments.map((t) => (
             <li
               key={t.id}
               onClick={() => navigate(`/tournaments/${t.id}`)}
-              className="p-3 rounded-2xl bg-[#082F58] border border-[#FAEEDA]/15 cursor-pointer hover:border-[#FAEEDA]/40"
+              className="p-3 rounded-2xl bg-surface border border-ink/15 cursor-pointer hover:border-ink/40"
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-[#FAEEDA]/60">
+                <span className="text-xs text-ink/60">
                   {new Date(t.createdAt).toLocaleString()}
                 </span>
                 <span
@@ -47,14 +47,14 @@ export default function TournamentListScreen() {
                     'text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ' +
                     (t.status === 'COMPLETED'
                       ? 'bg-[#22C55E]/20 text-[#22C55E]'
-                      : 'bg-[#FAEEDA]/20 text-[#FAEEDA]')
+                      : 'bg-ink/20 text-ink')
                   }
                 >
                   {t.status === 'COMPLETED' ? 'Completed' : 'Live'}
                 </span>
               </div>
               <p className="font-medium">{t.name || 'Tournament'}</p>
-              <p className="text-xs text-[#FAEEDA]/70">
+              <p className="text-xs text-ink/70">
                 {t.participants.map((p) => p.player.username).join(', ')} &middot;{' '}
                 {t._count.matches} matches
               </p>
