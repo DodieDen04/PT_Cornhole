@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { GhostButton, SecondaryButton } from '../components/Button.jsx';
+import { SecondaryButton } from '../components/Button.jsx';
+import Breadcrumb from '../components/Breadcrumb.jsx';
 import { BAG_HEX } from '../constants/colours.js';
 import { toCsv, downloadCsv } from '../lib/csv.js';
 
@@ -28,9 +29,15 @@ export default function HistoryScreen() {
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto">
-      <header className="flex items-center justify-between mb-6">
+      <header className="mb-6">
+        <Breadcrumb
+          crumbs={[
+            { label: 'Home', path: '/' },
+            { label: 'Settings', path: '/settings' },
+            { label: 'History' },
+          ]}
+        />
         <h1 className="text-2xl font-bold tracking-tight">History</h1>
-        <GhostButton onClick={() => navigate('/')}>Home</GhostButton>
       </header>
 
       {games.length > 0 && (

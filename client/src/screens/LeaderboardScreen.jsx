@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { GhostButton } from '../components/Button.jsx';
+import Breadcrumb from '../components/Breadcrumb.jsx';
 import GroupFilter from '../components/GroupFilter.jsx';
 
 export default function LeaderboardScreen() {
@@ -23,9 +23,15 @@ export default function LeaderboardScreen() {
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto">
-      <header className="flex items-center justify-between mb-5">
+      <header className="mb-5">
+        <Breadcrumb
+          crumbs={[
+            { label: 'Home', path: '/' },
+            { label: 'Settings', path: '/settings' },
+            { label: 'Leaderboard' },
+          ]}
+        />
         <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
-        <GhostButton onClick={() => navigate('/')}>Home</GhostButton>
       </header>
 
       <GroupFilter value={groupId} onChange={setGroupId} />

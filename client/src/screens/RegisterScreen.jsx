@@ -15,13 +15,18 @@ export default function RegisterScreen() {
   async function onSubmit(e) {
     e.preventDefault();
     setError(null);
+    const trimmed = username.trim();
+    if (trimmed.length < 3) {
+      setError('Username must be at least 3 characters');
+      return;
+    }
     if (pin !== pin2) {
       setError('PINs do not match');
       return;
     }
     setSubmitting(true);
     try {
-      await register(username.trim(), pin);
+      await register(trimmed, pin);
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -45,9 +50,14 @@ export default function RegisterScreen() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60"
+            placeholder="e.g. Ben, Benny T, BenTheThrower"
+            minLength={3}
+            className="min-h-[48px] px-4 rounded-xl bg-surface border border-ink/20 text-ink outline-none focus:border-ink/60 placeholder:text-ink/40"
             required
           />
+          <span className="text-xs text-ink/60">
+            This is your display name in games (at least 3 characters).
+          </span>
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-sm text-ink/80">PIN (4 digits)</span>

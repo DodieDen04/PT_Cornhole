@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { PrimaryButton, GhostButton } from '../components/Button.jsx';
+import { PrimaryButton } from '../components/Button.jsx';
+import Breadcrumb from '../components/Breadcrumb.jsx';
 
 export default function GroupsListScreen() {
   const navigate = useNavigate();
@@ -18,9 +19,15 @@ export default function GroupsListScreen() {
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto pb-12">
-      <header className="flex items-center justify-between mb-5">
+      <header className="mb-5">
+        <Breadcrumb
+          crumbs={[
+            { label: 'Home', path: '/' },
+            { label: 'Settings', path: '/settings' },
+            { label: 'My groups' },
+          ]}
+        />
         <h1 className="text-2xl font-bold tracking-tight">My groups</h1>
-        <GhostButton onClick={() => navigate('/settings')}>Back</GhostButton>
       </header>
 
       {error && (

@@ -275,10 +275,9 @@ function PracticeCard({ label, colour, thrown, total, highlight }) {
   return (
     <div
       className={
-        'rounded-2xl px-3 py-2 border ' +
+        'rounded-2xl px-3 py-2 border bg-surface ' +
         (highlight ? 'border-ink' : 'border-ink/20')
       }
-      style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
       <div className="flex items-center gap-1.5">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colour }} />

@@ -11,8 +11,8 @@ function isValidPin(pin) {
 
 router.post('/register', async (req, res) => {
   const { username, pin } = req.body || {};
-  if (!username || typeof username !== 'string' || username.trim().length < 2) {
-    return res.status(400).json({ error: 'Username must be at least 2 characters' });
+  if (!username || typeof username !== 'string' || username.trim().length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters' });
   }
   if (!isValidPin(pin)) {
     return res.status(400).json({ error: 'PIN must be exactly 4 digits' });

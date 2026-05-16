@@ -214,8 +214,8 @@ export default function ScoringScreen() {
 
   const throwerPlayer = thrower ? game.players.find((gp) => gp.playerId === thrower.playerId)?.player : null;
 
-  const team1Thrown = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 1).length;
-  const team2Thrown = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 2).length;
+  const team1Throws = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 1);
+  const team2Throws = round.bagThrows.filter((t) => teamByPlayer[t.playerId] === 2);
   const throwerTeam = thrower ? teamByPlayer[thrower.playerId] : null;
   const throwerHex = throwerTeam === 1 ? team1Hex : throwerTeam === 2 ? team2Hex : null;
 
@@ -231,17 +231,19 @@ export default function ScoringScreen() {
       <div className="grid grid-cols-2 gap-2 mb-2">
         <TeamCard
           label={team1.map((gp) => gp.player.username).join(' & ')}
-          score={game.team1Score}
+          gameScore={game.team1Score}
+          roundScore={round.team1RoundScore}
           colour={team1Hex}
           highlight={throwerTeam === 1}
-          thrown={team1Thrown}
+          throws={team1Throws}
         />
         <TeamCard
           label={team2.map((gp) => gp.player.username).join(' & ')}
-          score={game.team2Score}
+          gameScore={game.team2Score}
+          roundScore={round.team2RoundScore}
           colour={team2Hex}
           highlight={throwerTeam === 2}
-          thrown={team2Thrown}
+          throws={team2Throws}
         />
       </div>
 
@@ -263,7 +265,7 @@ export default function ScoringScreen() {
       <DragTip />
 
       <div className="flex-1 min-h-0 flex items-center justify-center">
-        <Board bags={bags} onPlace={placeBag} onMove={moveBag} disabled={busy || !thrower} />
+        <Board bags={bags} onPlace={placeBag} onMove={moveBag} disabled={busy} />
       </div>
 
       {error && <p className="text-xs text-[#EF4444] text-center mt-1">{error}</p>}
@@ -443,20 +445,19 @@ function PopupScore({ label, score, colour, winner }) {
   return (
     <div
       className={
-        'rounded-xl px-3 py-2 border ' + (winner ? 'border-ink' : 'border-ink/20')
+        'rounded-xl px-3 py-2 border bg-surface ' + (winner ? 'border-ink' : 'border-ink/20')
       }
       style={{
-        background: 'rgba(8, 47, 88, 0.7)',
         boxShadow: winner ? `0 0 14px ${colour}55` : undefined,
       }}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-center gap-1.5">
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colour }} />
         <span className="text-[10px] uppercase tracking-wider text-ink/70 truncate">
           {label}
         </span>
       </div>
-      <div className="text-2xl font-black mt-0.5" style={{ color: colour }}>
+      <div className="text-2xl font-black mt-0.5 text-center" style={{ color: colour }}>
         {score}
       </div>
     </div>
@@ -473,39 +474,61 @@ function Modal({ children }) {
   );
 }
 
-function TeamCard({ label, score, colour, highlight, thrown }) {
+function TeamCard({ label, gameScore, roundScore, colour, highlight, throws }) {
   return (
     <div
       className={
-        'rounded-2xl px-3 py-2 border ' +
+        'rounded-2xl px-3 py-2 border bg-surface ' +
         (highlight ? 'border-ink' : 'border-ink/20')
       }
-      style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm italic text-ink/70 leading-none">({roundScore})</span>
+        <span
+          className="text-3xl sm:text-4xl font-black leading-none"
+          style={{ color: colour }}
+        >
+          {gameScore}
+        </span>
+      </div>
+      <div className="flex items-center justify-center gap-1.5 mt-1">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colour }} />
         <span className="text-[10px] uppercase tracking-wider text-ink/70 truncate">
           {label}
         </span>
       </div>
-      <div
-        className="text-3xl sm:text-4xl font-black leading-tight mt-0.5"
-        style={{ color: colour }}
-      >
-        {score}
-      </div>
-      <div className="flex gap-1 mt-1">
+      <div className="flex items-center justify-center gap-1.5 mt-1">
         {[0, 1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className="w-2.5 h-2.5 rounded-full border"
-            style={{
-              background: i < thrown ? colour : 'transparent',
-              borderColor: colour,
-            }}
-          />
+          <ThrowIndicator key={i} colour={colour} result={throws[i]?.result} />
         ))}
       </div>
     </div>
+  );
+}
+
+function ThrowIndicator({ colour, result }) {
+  const base = 'inline-flex items-center justify-center w-3.5 h-3.5 rounded-full';
+  if (!result) {
+    return <span className={base + ' border-2'} style={{ borderColor: colour }} />;
+  }
+  if (result === 'BOARD') {
+    return <span className={base} style={{ background: colour }} />;
+  }
+  if (result === 'CORNHOLE') {
+    return (
+      <span className={base} style={{ background: colour }}>
+        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+      </span>
+    );
+  }
+  return (
+    <span className={base} style={{ background: colour }}>
+      <span
+        className="text-[10px] font-black leading-none"
+        style={{ color: '#7F1D1D', textShadow: '0 0 2px white, 0 0 2px white' }}
+      >
+        ✕
+      </span>
+    </span>
   );
 }

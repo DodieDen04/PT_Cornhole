@@ -139,11 +139,10 @@ function ScoreBox({ label, score, target, colour, winner }) {
   return (
     <div
       className={
-        'rounded-2xl p-4 border ' +
+        'rounded-2xl p-4 border bg-surface ' +
         (winner ? 'border-ink' : 'border-ink/20')
       }
       style={{
-        background: 'rgba(8, 47, 88, 0.7)',
         boxShadow: winner ? `0 0 20px ${colour}55` : undefined,
       }}
     >

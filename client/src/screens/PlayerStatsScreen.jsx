@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { GhostButton, SecondaryButton } from '../components/Button.jsx';
+import Breadcrumb from '../components/Breadcrumb.jsx';
 import { toCsv, downloadCsv } from '../lib/csv.js';
 import Heatmap, { HeatmapLegend } from '../components/Heatmap.jsx';
 import TrendChart from '../components/TrendChart.jsx';
@@ -103,15 +104,25 @@ export default function PlayerStatsScreen() {
   }
 
   const { competitive: c, practice: p, player } = stats;
+  const isOwn = playerId === me.id;
+  const crumbs = isOwn
+    ? [
+        { label: 'Home', path: '/' },
+        { label: 'Settings', path: '/settings' },
+        { label: 'My stats' },
+      ]
+    : [
+        { label: 'Home', path: '/' },
+        { label: 'Leaderboard', path: '/leaderboard' },
+        { label: player.username },
+      ];
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto pb-12">
-      <header className="flex items-center justify-between mb-5">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-ink/60">Stats</p>
-          <h1 className="text-2xl font-bold tracking-tight">{player.username}</h1>
-        </div>
-        <GhostButton onClick={() => navigate('/')}>Home</GhostButton>
+      <header className="mb-5">
+        <Breadcrumb crumbs={crumbs} />
+        <p className="text-xs uppercase tracking-wider text-ink/60">Stats</p>
+        <h1 className="text-2xl font-bold tracking-tight">{player.username}</h1>
       </header>
 
       <GroupFilter value={groupId} onChange={setGroupId} />

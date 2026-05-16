@@ -442,14 +442,22 @@ function ColourRow({ label, value, disabled, onChange }) {
               onClick={() => onChange(c)}
               disabled={isDisabled}
               className={
-                'flex-1 min-h-[44px] rounded-xl border-2 flex items-center justify-center ' +
+                'flex-1 min-h-[44px] rounded-xl border-2 flex items-center justify-center relative ' +
                 (isSelected ? 'border-ink' : 'border-transparent') +
-                (isDisabled ? ' opacity-30' : '')
+                (isDisabled ? ' cursor-not-allowed' : '')
               }
               style={{ background: BAG_HEX[c] }}
-              aria-label={BAG_LABEL[c]}
+              aria-label={BAG_LABEL[c] + (isDisabled ? ' (taken by other team)' : '')}
             >
               {isSelected && <span className="text-page font-bold">✓</span>}
+              {isDisabled && (
+                <span
+                  className="text-page text-base font-black leading-none"
+                  style={{ textShadow: '0 0 3px rgba(0,0,0,0.55)' }}
+                >
+                  ✕
+                </span>
+              )}
             </button>
           );
         })}

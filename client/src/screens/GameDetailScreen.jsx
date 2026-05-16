@@ -94,10 +94,9 @@ function TeamHead({ names, score, colour, winner }) {
   return (
     <div
       className={
-        'rounded-2xl p-3 border ' +
+        'rounded-2xl p-3 border bg-surface ' +
         (winner ? 'border-ink' : 'border-ink/20')
       }
-      style={{ background: 'rgba(8, 47, 88, 0.7)' }}
     >
       <div className="flex items-center gap-2">
         <span className="w-3 h-3 rounded-full" style={{ background: colour }} />
