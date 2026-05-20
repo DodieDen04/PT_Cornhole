@@ -9,7 +9,8 @@
     "start": "cd server && node index.js",
     "seed": "cd server && npm run seed",
     "migrate:deploy": "cd server && npx prisma migrate deploy",
-    "migrate:dev": "cd server && npx prisma migrate dev"
+    "migrate:dev": "cd server && npx prisma migrate dev",
+    "backup": "node scripts/backup.js"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

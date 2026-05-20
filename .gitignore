@@ -1,7 +1,10 @@
 ﻿node_modules/
 .env
+.env.backup
+.env.production
 dist/
 *.log
 .DS_Store
 .claude/
+backups/
 

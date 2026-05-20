@@ -23,5 +23,10 @@ Cornhole Scoring App
 
 ## Deploying
 - Push to main. Railway auto-deploys.
-- DB migrations: railway run npx prisma migrate deploy
-"@ | Out-File -Encoding utf8 CLAUDE.md
+- DB migrations: from `server/`, run `DATABASE_URL="<public Railway URL>" npx prisma migrate deploy`. Don't use `railway run` for migrations - it injects the internal `*.railway.internal` URL which is unreachable from a laptop.
+
+## Backups
+- Manual production DB backup: `npm run backup` from repo root.
+- Reads `DATABASE_URL` from `.env.backup` (gitignored) or inline env var. Writes `backups/cornhole-YYYY-MM-DD-HHMM.sql` via `pg_dump` in a Docker container.
+- Always run a backup before destructive operations: schema migrations, deleting a Postgres service, restoring from a dump, etc.
+- Restore: `docker run --rm -i postgres:18-alpine psql "<DATABASE_URL>" < backups/<file>.sql`
