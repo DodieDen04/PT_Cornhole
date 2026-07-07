@@ -14,11 +14,22 @@ import {
 const GRID_X = 26;
 const GRID_Y = 46;
 
+export const HEAT_STOPS = [
+  { fill: '#1D4ED8', alpha: 0.35 },
+  { fill: '#3B82F6', alpha: 0.5 },
+  { fill: '#22D3EE', alpha: 0.55 },
+  { fill: '#FBBF24', alpha: 0.65 },
+  { fill: '#F97316', alpha: 0.75 },
+  { fill: '#DC2626', alpha: 0.85 },
+  { fill: '#7F1D1D', alpha: 0.95 },
+];
+
 function quantileColour(rank) {
-  if (rank <= 0.25) return { fill: '#3B82F6', alpha: 0.45 };
-  if (rank <= 0.5) return { fill: '#FBBF24', alpha: 0.6 };
-  if (rank <= 0.75) return { fill: '#F97316', alpha: 0.7 };
-  return { fill: '#DC2626', alpha: 0.85 };
+  const idx = Math.min(
+    HEAT_STOPS.length - 1,
+    Math.floor(rank * HEAT_STOPS.length),
+  );
+  return HEAT_STOPS[idx];
 }
 
 function buildGrid(throws) {
@@ -65,7 +76,7 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
         width={(BOARD_X_MAX - BOARD_X_MIN) * VIEWBOX_W}
         height={(BOARD_Y_MAX - BOARD_Y_MIN) * VIEWBOX_H}
         fill="#D4B58F"
-        opacity="0.45"
+        opacity="0.9"
         rx="1.5"
       />
       <circle
@@ -137,13 +148,16 @@ export default function Heatmap({ throws = [], showBoardOutline = true, classNam
 
 export function HeatmapLegend() {
   return (
-    <div className="flex items-center justify-center gap-2 mt-2 text-[10px] uppercase tracking-wider text-ink/60">
-      <span>Less</span>
-      <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(59,130,246,0.45)' }} />
-      <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(251,191,36,0.6)' }} />
-      <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(249,115,22,0.7)' }} />
-      <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(220,38,38,0.85)' }} />
-      <span>More</span>
+    <div className="flex items-center justify-center gap-1.5 mt-2 text-[10px] uppercase tracking-wider text-ink/60">
+      <span className="mr-0.5">Less</span>
+      {HEAT_STOPS.map((s, i) => (
+        <span
+          key={i}
+          className="w-3 h-3 rounded-sm"
+          style={{ background: s.fill, opacity: s.alpha }}
+        />
+      ))}
+      <span className="ml-0.5">More</span>
     </div>
   );
 }

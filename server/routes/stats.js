@@ -132,23 +132,31 @@ router.get('/player/:id', authenticate, async (req, res) => {
   };
 
   const trend = [];
-  const trendSource = [];
   for (const g of competitiveGames) {
+    const myGp = g.players.find((gp) => gp.playerId === playerId);
     let throws = 0;
-    let cornholes = 0;
+    let gCornholes = 0;
+    let gBoards = 0;
+    let gOffs = 0;
     for (const r of g.rounds) {
       for (const t of r.bagThrows) {
         if (t.playerId !== playerId) continue;
         throws += 1;
-        if (t.result === 'CORNHOLE') cornholes += 1;
+        if (t.result === 'CORNHOLE') gCornholes += 1;
+        else if (t.result === 'BOARD') gBoards += 1;
+        else gOffs += 1;
       }
     }
     if (throws === 0) continue;
-    trendSource.push({
+    const winningTeam = g.result?.winningTeam;
+    trend.push({
       mode: 'COMPETITIVE',
       completedAt: g.completedAt,
-      cornholePct: Math.round((cornholes / throws) * 1000) / 10,
       throws,
+      cornholes: gCornholes,
+      boards: gBoards,
+      offs: gOffs,
+      won: winningTeam && myGp ? winningTeam === myGp.team : null,
     });
   }
   const practiceSessions = await prisma.game.findMany({
@@ -160,27 +168,33 @@ router.get('/player/:id', authenticate, async (req, res) => {
     },
     orderBy: { completedAt: 'desc' },
     include: { practiceSets: { where: { playerId }, include: { bagThrows: true } } },
-    take: 20,
+    take: 200,
   });
   for (const g of practiceSessions) {
     let throws = 0;
-    let cornholes = 0;
+    let gCornholes = 0;
+    let gBoards = 0;
+    let gOffs = 0;
     for (const s of g.practiceSets) {
       for (const t of s.bagThrows) {
         throws += 1;
-        if (t.result === 'CORNHOLE') cornholes += 1;
+        if (t.result === 'CORNHOLE') gCornholes += 1;
+        else if (t.result === 'BOARD') gBoards += 1;
+        else gOffs += 1;
       }
     }
     if (throws === 0) continue;
-    trendSource.push({
+    trend.push({
       mode: 'PRACTICE',
       completedAt: g.completedAt,
-      cornholePct: Math.round((cornholes / throws) * 1000) / 10,
       throws,
+      cornholes: gCornholes,
+      boards: gBoards,
+      offs: gOffs,
+      won: null,
     });
   }
-  trendSource.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
-  trend.push(...trendSource.slice(-20));
+  trend.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
 
   res.json({
     stats: {
@@ -193,7 +207,7 @@ router.get('/player/:id', authenticate, async (req, res) => {
 });
 
 router.get('/heatmap', authenticate, async (req, res) => {
-  const { playerId, mode, dateFrom, dateTo, result, groupId } = req.query;
+  const { playerId, mode, dateFrom, dateTo, result, groupId, format } = req.query;
   if (!playerId) return res.status(400).json({ error: 'playerId required' });
 
   const where = { playerId };
@@ -208,6 +222,16 @@ router.get('/heatmap', authenticate, async (req, res) => {
     if (dateTo) where.createdAt.lte = new Date(dateTo);
   }
   if (groupId) where.game = { groupId };
+  if (format === '1v1' || format === '2v2') {
+    const wantPlayers = format === '1v1' ? 2 : 4;
+    const compGames = await prisma.game.findMany({
+      where: { mode: 'COMPETITIVE', ...(groupId ? { groupId } : {}) },
+      select: { id: true, _count: { select: { players: true } } },
+    });
+    where.gameId = {
+      in: compGames.filter((g) => g._count.players === wantPlayers).map((g) => g.id),
+    };
+  }
 
   const throws = await prisma.bagThrow.findMany({
     where,
@@ -269,11 +293,28 @@ router.get('/leaderboard', authenticate, async (req, res) => {
       status: 'COMPLETED',
       ...(groupId ? { groupId } : {}),
     },
-    include: { players: true, result: true },
+    include: {
+      players: true,
+      result: true,
+      rounds: { include: { bagThrows: true } },
+    },
   });
 
   const summary = {};
-  for (const p of players) summary[p.id] = { id: p.id, username: p.username, games: 0, wins: 0 };
+  for (const p of players) {
+    summary[p.id] = {
+      id: p.id,
+      username: p.username,
+      games: 0,
+      wins: 0,
+      points: 0,
+      roundsThrown: 0,
+      throws: 0,
+      cornholes: 0,
+      boards: 0,
+      offs: 0,
+    };
+  }
 
   for (const g of games) {
     const winning = g.result?.winningTeam;
@@ -284,13 +325,40 @@ router.get('/leaderboard', authenticate, async (req, res) => {
       s.games += 1;
       if (gp.team === winning) s.wins += 1;
     }
+    for (const r of g.rounds) {
+      const threwThisRound = new Set();
+      for (const t of r.bagThrows) {
+        const s = summary[t.playerId];
+        if (!s) continue;
+        threwThisRound.add(t.playerId);
+        s.throws += 1;
+        s.points += t.points;
+        if (t.result === 'CORNHOLE') s.cornholes += 1;
+        else if (t.result === 'BOARD') s.boards += 1;
+        else s.offs += 1;
+      }
+      for (const id of threwThisRound) summary[id].roundsThrown += 1;
+    }
   }
 
   const leaderboard = Object.values(summary)
     .map((s) => ({
-      ...s,
+      id: s.id,
+      username: s.username,
+      games: s.games,
+      wins: s.wins,
       losses: s.games - s.wins,
       winPct: pct(s.wins, s.games),
+      lossPct: pct(s.games - s.wins, s.games),
+      points: s.points,
+      avgPointsPerRound:
+        s.roundsThrown > 0 ? Math.round((s.points / s.roundsThrown) * 10) / 10 : 0,
+      cornholes: s.cornholes,
+      cornholePct: pct(s.cornholes, s.throws),
+      boards: s.boards,
+      boardPct: pct(s.boards, s.throws),
+      accuracy: s.cornholes + s.boards,
+      accuracyPct: pct(s.cornholes + s.boards, s.throws),
     }))
     .filter((s) => s.games >= minGames)
     .sort((a, b) => {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { PrimaryButton, GhostButton } from '../components/Button.jsx';
+import ThrowOrderModal from '../components/ThrowOrderModal.jsx';
 import { BAG_COLOURS, BAG_HEX, BAG_LABEL, getLastTeamColour, rememberTeamColours } from '../constants/colours.js';
 
 const TEAM_SIZES = [
@@ -17,7 +18,7 @@ export default function GameSetupScreen() {
   const { player } = useAuth();
   const [players, setPlayers] = useState([]);
   const [teamSize, setTeamSize] = useState(1);
-  const [team1, setTeam1] = useState([]);
+  const [team1, setTeam1] = useState(() => (player ? [player.id] : []));
   const [team2, setTeam2] = useState([]);
   const [team1Colour, setTeam1Colour] = useState(getLastTeamColour(1) || 'YELLOW');
   const [team2Colour, setTeam2Colour] = useState(getLastTeamColour(2) || 'RED');
@@ -30,6 +31,7 @@ export default function GameSetupScreen() {
   const [groups, setGroups] = useState([]);
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [groupMembersCache, setGroupMembersCache] = useState({});
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
   useEffect(() => {
     api('/api/players').then((d) => setPlayers(d.players)).catch(() => {});
@@ -53,12 +55,6 @@ export default function GameSetupScreen() {
       .catch(() => {});
   }, [activeGroupId, groupMembersCache]);
 
-  useEffect(() => {
-    if (player && team1.length === 0 && team2.length === 0) {
-      setTeam1([player.id]);
-    }
-  }, [player, team1.length, team2.length]);
-
   const otherPlayers = useMemo(
     () => players.filter((p) => p.id !== player.id),
     [players, player.id],
@@ -76,6 +72,12 @@ export default function GameSetupScreen() {
     setError(null);
     if (team1.includes(playerId)) {
       setTeam1((t) => t.filter((id) => id !== playerId));
+      return;
+    }
+    if (teamSize === 1) {
+      // 1v1: only one slot, replace
+      setTeam2((t) => t.filter((id) => id !== playerId));
+      setTeam1([playerId]);
       return;
     }
     if (team1.length >= teamSize) return;
@@ -106,7 +108,7 @@ export default function GameSetupScreen() {
     return true;
   }
 
-  async function startGame() {
+  async function startGame({ startingTeam, team1Order, team2Order }) {
     setSubmitting(true);
     setError(null);
     try {
@@ -115,10 +117,11 @@ export default function GameSetupScreen() {
         team1Colour,
         team2Colour,
         targetScore: target,
+        startingTeam,
         groupId: activeGroupId,
         players: [
-          ...team1.map((id, i) => ({ playerId: id, team: 1, position: i + 1 })),
-          ...team2.map((id, i) => ({ playerId: id, team: 2, position: i + 1 })),
+          ...team1Order.map((id, i) => ({ playerId: id, team: 1, position: i + 1 })),
+          ...team2Order.map((id, i) => ({ playerId: id, team: 2, position: i + 1 })),
         ],
       };
       const { game } = await api('/api/games', { method: 'POST', body });
@@ -126,6 +129,7 @@ export default function GameSetupScreen() {
       navigate(`/game/${game.id}`);
     } catch (err) {
       setError(err.message);
+      setShowOrderModal(false);
     } finally {
       setSubmitting(false);
     }
@@ -162,8 +166,20 @@ export default function GameSetupScreen() {
     }
   }
 
-  const teammateOption = teamSize === 2 ? eligibleOthers.filter((p) => !team2.includes(p.id)) : [];
-  const opponentOptions = eligibleOthers.filter((p) => !team1.includes(p.id));
+  const team1Candidates = useMemo(
+    () => [player, ...eligibleOthers].filter((p) => !team2.includes(p.id)),
+    [player, eligibleOthers, team2],
+  );
+  const team2Candidates = useMemo(
+    () => [player, ...eligibleOthers].filter((p) => !team1.includes(p.id)),
+    [player, eligibleOthers, team1],
+  );
+  const playersById = useMemo(() => {
+    const map = {};
+    for (const p of players) map[p.id] = p;
+    if (player && !map[player.id]) map[player.id] = player;
+    return map;
+  }, [players, player]);
 
   return (
     <div className="min-h-screen px-5 py-6 max-w-md mx-auto">
@@ -219,55 +235,43 @@ export default function GameSetupScreen() {
       )}
 
       <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">
-          Your team {teamSize === 2 ? '(Team 1)' : ''}
-        </h2>
-        <PlayerCard
-          label={`${player.username} (you)`}
-          selected
-          locked
-          teamColour={team1Hex}
-        />
-        {teamSize === 2 && (
-          <div className="mt-3">
-            <p className="text-xs text-ink/60 mb-2">Pick teammate:</p>
-            <div className="flex flex-col gap-2">
-              {teammateOption.length === 0 ? (
-                <p className="text-xs text-ink/50 italic">No other players available.</p>
-              ) : (
-                teammateOption.map((p) => (
-                  <PlayerCard
-                    key={p.id}
-                    label={p.username}
-                    isGuest={p.isGuest}
-                    selected={team1.includes(p.id)}
-                    teamColour={team1.includes(p.id) ? team1Hex : null}
-                    onClick={() => toggleT1(p.id)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        )}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm uppercase tracking-wider text-ink/60">Team 1</h2>
+          <ColourSelect value={team1Colour} taken={team2Colour} onChange={setTeam1Colour} />
+        </div>
+        <p className="text-xs text-ink/60 mb-2">
+          You're in by default. Tap yourself to step out and referee instead.
+        </p>
+        <div className="flex flex-col gap-2">
+          {team1Candidates.map((p) => (
+            <PlayerCard
+              key={p.id}
+              label={p.id === player.id ? `${p.username} (you)` : p.username}
+              isGuest={p.isGuest}
+              selected={team1.includes(p.id)}
+              teamColour={team1.includes(p.id) ? team1Hex : null}
+              onClick={() => toggleT1(p.id)}
+            />
+          ))}
+        </div>
       </section>
 
       <section className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm uppercase tracking-wider text-ink/60">
-            {teamSize === 1 ? 'Opponent' : 'Opponents (Team 2)'}
-          </h2>
+          <h2 className="text-sm uppercase tracking-wider text-ink/60">Team 2</h2>
+          <ColourSelect value={team2Colour} taken={team1Colour} onChange={setTeam2Colour} />
+        </div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-ink/60">
+            {teamSize === 1 ? 'Tap a player to choose the opponent.' : 'Pick two players.'}
+          </p>
           <button
             onClick={() => setShowQuickAdd((s) => !s)}
-            className="text-xs font-semibold text-ink underline underline-offset-4"
+            className="text-xs font-semibold text-ink underline underline-offset-4 shrink-0"
           >
             {showQuickAdd ? 'Cancel' : '+ Add guest'}
           </button>
         </div>
-        <p className="text-xs text-ink/60 mb-2">
-          {teamSize === 1
-            ? 'Tap a player to choose your opponent.'
-            : 'Pick two opponents.'}
-        </p>
 
         {showQuickAdd && (
           <div className="mb-3 p-3 rounded-xl bg-surface border border-ink/30">
@@ -294,13 +298,13 @@ export default function GameSetupScreen() {
         )}
 
         <div className="flex flex-col gap-2">
-          {opponentOptions.length === 0 ? (
+          {team2Candidates.length === 0 ? (
             <p className="text-xs text-ink/50 italic">No other players available.</p>
           ) : (
-            opponentOptions.map((p) => (
+            team2Candidates.map((p) => (
               <PlayerCard
                 key={p.id}
-                label={p.username}
+                label={p.id === player.id ? `${p.username} (you)` : p.username}
                 isGuest={p.isGuest}
                 selected={team2.includes(p.id)}
                 teamColour={team2.includes(p.id) ? team2Hex : null}
@@ -309,22 +313,6 @@ export default function GameSetupScreen() {
             ))
           )}
         </div>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-sm uppercase tracking-wider text-ink/60 mb-2">Bag colours</h2>
-        <ColourRow
-          label="Team 1 (you)"
-          value={team1Colour}
-          disabled={team2Colour}
-          onChange={setTeam1Colour}
-        />
-        <ColourRow
-          label="Team 2"
-          value={team2Colour}
-          disabled={team1Colour}
-          onChange={setTeam2Colour}
-        />
       </section>
 
       <section className="mb-6">
@@ -349,33 +337,33 @@ export default function GameSetupScreen() {
 
       {error && <p className="text-sm text-[#EF4444] mb-3">{error}</p>}
 
-      <PrimaryButton className="w-full" disabled={!ready() || submitting} onClick={startGame}>
+      <PrimaryButton
+        className="w-full"
+        disabled={!ready() || submitting}
+        onClick={() => setShowOrderModal(true)}
+      >
         {submitting ? 'Starting...' : 'Start game'}
       </PrimaryButton>
+
+      {showOrderModal && (
+        <ThrowOrderModal
+          is2v2={teamSize === 2}
+          team1Ids={team1}
+          team2Ids={team2}
+          team1Hex={team1Hex}
+          team2Hex={team2Hex}
+          playersById={playersById}
+          onCancel={() => setShowOrderModal(false)}
+          onConfirm={startGame}
+        />
+      )}
     </div>
   );
 }
 
-function PlayerCard({ label, selected, locked, teamColour, isGuest, onClick }) {
+function PlayerCard({ label, selected, teamColour, isGuest, onClick }) {
   const baseClasses = 'w-full px-3 py-3 rounded-xl flex items-center gap-2 text-left transition';
   const guestBadge = isGuest ? <GuestBadge selected={selected} /> : null;
-
-  if (locked) {
-    return (
-      <div
-        className={
-          baseClasses +
-          ' bg-surface border border-ink/40'
-        }
-      >
-        {teamColour && (
-          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: teamColour }} />
-        )}
-        <span className="font-medium flex-1 truncate">{label}</span>
-        {guestBadge}
-      </div>
-    );
-  }
 
   return (
     <button
@@ -428,40 +416,26 @@ function GuestBadge({ selected }) {
   );
 }
 
-function ColourRow({ label, value, disabled, onChange }) {
+function ColourSelect({ value, taken, onChange }) {
   return (
-    <div className="mb-2">
-      <p className="text-xs text-ink/70 mb-1">{label}</p>
-      <div className="flex gap-2">
-        {BAG_COLOURS.map((c) => {
-          const isSelected = value === c;
-          const isDisabled = c === disabled;
-          return (
-            <button
-              key={c}
-              onClick={() => onChange(c)}
-              disabled={isDisabled}
-              className={
-                'flex-1 min-h-[44px] rounded-xl border-2 flex items-center justify-center relative ' +
-                (isSelected ? 'border-ink' : 'border-transparent') +
-                (isDisabled ? ' cursor-not-allowed' : '')
-              }
-              style={{ background: BAG_HEX[c] }}
-              aria-label={BAG_LABEL[c] + (isDisabled ? ' (taken by other team)' : '')}
-            >
-              {isSelected && <span className="text-page font-bold">✓</span>}
-              {isDisabled && (
-                <span
-                  className="text-page text-base font-black leading-none"
-                  style={{ textShadow: '0 0 3px rgba(0,0,0,0.55)' }}
-                >
-                  ✕
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <label className="flex items-center gap-2">
+      <span
+        className="w-3.5 h-3.5 rounded-full shrink-0 border border-ink/40"
+        style={{ background: BAG_HEX[value] }}
+      />
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="min-h-[36px] pl-2 pr-1 rounded-lg bg-surface border border-ink/20 text-ink text-sm font-semibold outline-none"
+        aria-label="Bag colour"
+      >
+        {BAG_COLOURS.map((c) => (
+          <option key={c} value={c} disabled={c === taken}>
+            {BAG_LABEL[c]}
+            {c === taken ? ' (taken)' : ''}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

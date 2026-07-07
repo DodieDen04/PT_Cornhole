@@ -25,6 +25,7 @@ enum BagColour {
   RED
   BLUE
   GREEN
+  BLACK
 }
 
 enum ThrowResult {
@@ -65,6 +66,7 @@ model Player {
   matchesWon       TournamentMatch[] @relation("MatchWinner")
   createdGroups    Group[]            @relation("GroupCreator")
   groupMemberships GroupMember[]
+  createdGames     Game[]             @relation("GameCreator")
 }
 
 model Game {
@@ -78,6 +80,7 @@ model Game {
   practiceTag          String?
   startingTeam         Int?
   groupId              String?
+  createdById          String?
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @default(now()) @updatedAt
   completedAt          DateTime?
@@ -89,8 +92,10 @@ model Game {
   result          GameResult?
   tournamentMatch TournamentMatch?
   group           Group?           @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  createdBy       Player?          @relation("GameCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([groupId])
+  @@index([createdById])
 }
 
 model GamePlayer {

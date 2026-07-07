@@ -7,6 +7,7 @@ import Breadcrumb from '../components/Breadcrumb.jsx';
 import { toCsv, downloadCsv } from '../lib/csv.js';
 import Heatmap, { HeatmapLegend } from '../components/Heatmap.jsx';
 import TrendChart from '../components/TrendChart.jsx';
+import RecentFormChart from '../components/RecentFormChart.jsx';
 import GroupFilter from '../components/GroupFilter.jsx';
 
 const MODE_FILTERS = [
@@ -25,6 +26,31 @@ const RANGE_FILTERS = [
   { label: '30 days', days: 30 },
   { label: '7 days', days: 7 },
 ];
+const FORMAT_FILTERS = [
+  { label: 'All formats', value: '' },
+  { label: '1v1', value: '1v1' },
+  { label: '2v2', value: '2v2' },
+];
+
+const TREND_METRICS = [
+  { label: 'Cornhole', value: 'CORNHOLE', key: 'cornholes', colour: '#FFD700' },
+  { label: 'Board', value: 'BOARD', key: 'boards', colour: '#D4B58F' },
+  { label: 'Off', value: 'OFF', key: 'offs', colour: '#EF4444' },
+];
+const TREND_RANGES = [
+  { label: '1 day', days: 1 },
+  { label: '30 days', days: 30 },
+  { label: '3 months', days: 91 },
+  { label: '6 months', days: 183 },
+  { label: '1 year', days: 365 },
+  { label: 'All time', days: 0 },
+];
+const FORM_METRICS = [
+  { label: 'Win / Loss', value: 'WINLOSS' },
+  { label: 'Cornhole', value: 'CORNHOLE', colour: '#FFD700' },
+  { label: 'Board', value: 'BOARD', colour: '#D4B58F' },
+  { label: 'Off', value: 'OFF', colour: '#EF4444' },
+];
 
 export default function PlayerStatsScreen() {
   const { id: routeId } = useParams();
@@ -38,10 +64,16 @@ export default function PlayerStatsScreen() {
   const [mode, setMode] = useState('');
   const [resultFilter, setResultFilter] = useState('');
   const [rangeDays, setRangeDays] = useState(null);
+  const [format, setFormat] = useState('');
   const [opponentId, setOpponentId] = useState('');
   const [h2h, setH2h] = useState(null);
   const [groupId, setGroupId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [trendMetric, setTrendMetric] = useState('CORNHOLE');
+  const [trendRange, setTrendRange] = useState(0);
+  const [trendUnit, setTrendUnit] = useState('pct');
+  const [formMetric, setFormMetric] = useState('WINLOSS');
+  const [formUnit, setFormUnit] = useState('pct');
 
   useEffect(() => {
     setLoading(true);
@@ -69,10 +101,11 @@ export default function PlayerStatsScreen() {
       params.set('dateFrom', from);
     }
     if (groupId) params.set('groupId', groupId);
+    if (format) params.set('format', format);
     api(`/api/stats/heatmap?${params.toString()}`)
       .then((d) => setThrows(d.throws))
       .catch(() => setThrows([]));
-  }, [playerId, mode, resultFilter, rangeDays, groupId]);
+  }, [playerId, mode, resultFilter, rangeDays, groupId, format]);
 
   useEffect(() => {
     if (!opponentId) {
@@ -89,6 +122,33 @@ export default function PlayerStatsScreen() {
   const otherPlayers = useMemo(
     () => players.filter((p) => p.id !== playerId),
     [players, playerId],
+  );
+
+  const trendPoints = useMemo(() => {
+    const entries = stats?.trend || [];
+    const metricDef = TREND_METRICS.find((m) => m.value === trendMetric);
+    const cutoff = trendRange ? Date.now() - trendRange * 24 * 60 * 60 * 1000 : null;
+    return entries
+      .filter((e) => !cutoff || new Date(e.completedAt).getTime() >= cutoff)
+      .map((e) => {
+        const count = e[metricDef.key] || 0;
+        return {
+          mode: e.mode,
+          throws: e.throws,
+          count,
+          value:
+            trendUnit === 'pct'
+              ? e.throws > 0
+                ? Math.round((count / e.throws) * 1000) / 10
+                : 0
+              : count,
+        };
+      });
+  }, [stats, trendMetric, trendRange, trendUnit]);
+
+  const recentGames = useMemo(
+    () => (stats?.trend || []).filter((e) => e.mode === 'COMPETITIVE').slice(-10),
+    [stats],
   );
 
   if (loading) {
@@ -129,15 +189,31 @@ export default function PlayerStatsScreen() {
 
       <section className="mb-5">
         <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Competitive</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Tile label="Games" value={c.gamesPlayed} />
           <Tile label="Win %" value={`${c.winPct}%`} />
           <Tile label="W – L" value={`${c.won} – ${c.lost}`} />
           <Tile label="Streak" value={c.currentStreak ? `${c.currentStreak}${c.currentStreakType}` : '–'} />
         </div>
         <div className="grid grid-cols-3 gap-2 mt-2">
-          <Tile label="Cornhole %" value={`${c.cornholePct}%`} colour="#FFD700" />
-          <Tile label="Board %" value={`${c.boardPct}%`} colour="#D4B58F" />
-          <Tile label="Off %" value={`${c.offPct}%`} colour="#EF4444" />
+          <Tile
+            label="Cornhole"
+            value={`${c.cornholePct}%`}
+            sub={`${c.cornholes} of ${c.totalThrows}`}
+            colour="#FFD700"
+          />
+          <Tile
+            label="Board"
+            value={`${c.boardPct}%`}
+            sub={`${c.boards} of ${c.totalThrows}`}
+            colour="#D4B58F"
+          />
+          <Tile
+            label="Off"
+            value={`${c.offPct}%`}
+            sub={`${c.offs} of ${c.totalThrows}`}
+            colour="#EF4444"
+          />
         </div>
         <div className="grid grid-cols-2 gap-2 mt-2">
           <Tile label="Avg pts/round" value={c.avgPointsPerRound} />
@@ -151,16 +227,72 @@ export default function PlayerStatsScreen() {
           <div className="grid grid-cols-3 gap-2">
             <Tile label="Sets" value={p.totalSets} />
             <Tile label="Throws" value={p.totalThrows} />
-            <Tile label="Cornhole %" value={`${p.cornholePct}%`} colour="#FFD700" />
+            <Tile
+              label="Cornhole"
+              value={`${p.cornholePct}%`}
+              sub={`${p.cornholes} of ${p.totalThrows}`}
+              colour="#FFD700"
+            />
           </div>
         </section>
       )}
 
       <section className="mb-5">
         <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">
-          Cornhole accuracy trend
+          Accuracy trend
         </p>
-        <TrendChart trend={stats.trend || []} />
+        <div className="flex gap-2 mb-2">
+          <select
+            value={trendMetric}
+            onChange={(e) => setTrendMetric(e.target.value)}
+            className="flex-1 min-h-[40px] px-2 rounded-xl bg-surface border border-ink/20 text-ink text-sm outline-none"
+          >
+            {TREND_METRICS.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          <select
+            value={trendRange}
+            onChange={(e) => setTrendRange(Number(e.target.value))}
+            className="flex-1 min-h-[40px] px-2 rounded-xl bg-surface border border-ink/20 text-ink text-sm outline-none"
+          >
+            {TREND_RANGES.map((r) => (
+              <option key={r.label} value={r.days}>{r.label}</option>
+            ))}
+          </select>
+          <UnitToggle value={trendUnit} onChange={setTrendUnit} />
+        </div>
+        <TrendChart
+          points={trendPoints}
+          unit={trendUnit}
+          colour={TREND_METRICS.find((m) => m.value === trendMetric).colour}
+        />
+      </section>
+
+      <section className="mb-5">
+        <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">
+          Recent form (last 10 games)
+        </p>
+        <div className="flex gap-2 mb-2">
+          <select
+            value={formMetric}
+            onChange={(e) => setFormMetric(e.target.value)}
+            className="flex-1 min-h-[40px] px-2 rounded-xl bg-surface border border-ink/20 text-ink text-sm outline-none"
+          >
+            {FORM_METRICS.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          {formMetric !== 'WINLOSS' && (
+            <UnitToggle value={formUnit} onChange={setFormUnit} />
+          )}
+        </div>
+        <RecentFormChart
+          games={recentGames}
+          metric={formMetric}
+          unit={formUnit}
+          colour={FORM_METRICS.find((m) => m.value === formMetric)?.colour || '#FFD700'}
+        />
       </section>
 
       {otherPlayers.length > 0 && (
@@ -213,6 +345,11 @@ export default function PlayerStatsScreen() {
           value={String(rangeDays ?? '')}
           onChange={(v) => setRangeDays(v ? Number(v) : null)}
         />
+        <FilterRow
+          options={FORMAT_FILTERS}
+          value={format}
+          onChange={setFormat}
+        />
 
         <div className="mt-3">
           <Heatmap throws={throws} />
@@ -242,13 +379,36 @@ export default function PlayerStatsScreen() {
   );
 }
 
-function Tile({ label, value, colour }) {
+function Tile({ label, value, sub, colour }) {
   return (
     <div className="rounded-xl p-3 bg-surface border border-ink/15 text-left">
       <p className="text-[10px] uppercase tracking-wider text-ink/60">{label}</p>
       <p className="text-xl font-bold mt-0.5" style={{ color: colour || 'var(--pt-ink)' }}>
         {value}
       </p>
+      {sub && <p className="text-[10px] text-ink/60 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function UnitToggle({ value, onChange }) {
+  return (
+    <div className="flex rounded-xl border border-ink/20 overflow-hidden shrink-0">
+      {[
+        { label: '%', v: 'pct' },
+        { label: '#', v: 'raw' },
+      ].map((o) => (
+        <button
+          key={o.v}
+          onClick={() => onChange(o.v)}
+          className={
+            'min-h-[40px] px-3 text-sm font-semibold ' +
+            (value === o.v ? 'bg-ink text-page' : 'bg-surface text-ink')
+          }
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

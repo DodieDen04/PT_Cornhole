@@ -5,7 +5,7 @@ const { getGameTotals } = require('../lib/scoring');
 
 const router = express.Router();
 
-const VALID_COLOURS = ['YELLOW', 'RED', 'BLUE', 'GREEN'];
+const VALID_COLOURS = ['YELLOW', 'RED', 'BLUE', 'GREEN', 'BLACK'];
 
 const ABANDONED_PRACTICE_AGE_MS = 24 * 60 * 60 * 1000;
 const CLEANUP_DEBOUNCE_MS = 5 * 60 * 1000;
@@ -90,6 +90,7 @@ router.post('/', authenticate, async (req, res) => {
     }
     const target = Number(targetScore) || 21;
     if (target < 5 || target > 99) return res.status(400).json({ error: 'Invalid target score' });
+    const startingTeam = body.startingTeam === 2 ? 2 : 1;
 
     const is2v2 = players.length === 4;
     const t1 = players.filter((p) => p.team === 1);
@@ -113,8 +114,9 @@ router.post('/', authenticate, async (req, res) => {
         targetScore: target,
         team1Colour,
         team2Colour,
-        startingTeam: 1,
+        startingTeam,
         groupId: groupCheck.groupId,
+        createdById: req.player.id,
         players: {
           create: players.map((p) => ({
             playerId: p.playerId,
@@ -123,7 +125,7 @@ router.post('/', authenticate, async (req, res) => {
           })),
         },
         rounds: {
-          create: [{ roundNumber: 1, startingTeam: 1, throwingPair: 1 }],
+          create: [{ roundNumber: 1, startingTeam, throwingPair: 1 }],
         },
       },
     });
@@ -154,6 +156,7 @@ router.post('/', authenticate, async (req, res) => {
         mode: 'PRACTICE',
         status: 'IN_PROGRESS',
         groupId: groupCheck.groupId,
+        createdById: req.player.id,
         practiceThrowsPerSet: throwsPerSet,
         practiceTag: tag || null,
         players: {
@@ -175,7 +178,10 @@ router.get('/', authenticate, async (req, res) => {
   await cleanupAbandonedPractices().catch(() => {});
   const { status, mode } = req.query;
   const where = {
-    players: { some: { playerId: req.player.id } },
+    OR: [
+      { players: { some: { playerId: req.player.id } } },
+      { createdById: req.player.id },
+    ],
   };
   if (status) where.status = status;
   if (mode) where.mode = mode;
@@ -193,7 +199,13 @@ router.get('/', authenticate, async (req, res) => {
 
 router.get('/in-progress', authenticate, async (req, res) => {
   const game = await prisma.game.findFirst({
-    where: { status: 'IN_PROGRESS', players: { some: { playerId: req.player.id } } },
+    where: {
+      status: 'IN_PROGRESS',
+      OR: [
+        { players: { some: { playerId: req.player.id } } },
+        { createdById: req.player.id },
+      ],
+    },
     orderBy: { createdAt: 'desc' },
   });
   if (!game) return res.json({ game: null });

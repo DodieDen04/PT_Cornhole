@@ -1,10 +1,11 @@
-export const BAG_COLOURS = ['YELLOW', 'RED', 'BLUE', 'GREEN'];
+export const BAG_COLOURS = ['YELLOW', 'RED', 'BLUE', 'GREEN', 'BLACK'];
 
 export const BAG_HEX = {
   YELLOW: '#FFD700',
   RED: '#EF4444',
   BLUE: '#3B82F6',
   GREEN: '#22C55E',
+  BLACK: '#222222',
 };
 
 export const BAG_LABEL = {
@@ -12,6 +13,7 @@ export const BAG_LABEL = {
   RED: 'Red',
   BLUE: 'Blue',
   GREEN: 'Green',
+  BLACK: 'Black',
 };
 
 const LAST_TEAM_COLOUR_KEY = 'pt_cornhole_last_team_colour';

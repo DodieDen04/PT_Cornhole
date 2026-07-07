@@ -21,6 +21,7 @@ export default function HistoryScreen() {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('mode', filter);
+    params.set('status', 'COMPLETED');
     api(`/api/games?${params.toString()}`)
       .then((d) => setGames(d.games))
       .catch(() => {})
