@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../lib/prisma');
 const { authenticate } = require('../lib/auth');
+const { canSeePlayer } = require('../lib/visibility');
 
 const router = express.Router();
 
@@ -29,6 +30,9 @@ async function loadPlayerCompetitiveGames(playerId, groupId) {
 router.get('/player/:id', authenticate, async (req, res) => {
   const playerId = req.params.id;
   const groupId = req.query.groupId || null;
+  if (!(await canSeePlayer(req.player.id, playerId))) {
+    return res.status(403).json({ error: 'You do not share a group with this player' });
+  }
   const player = await prisma.player.findUnique({ where: { id: playerId } });
   if (!player) return res.status(404).json({ error: 'Player not found' });
 
@@ -209,6 +213,9 @@ router.get('/player/:id', authenticate, async (req, res) => {
 router.get('/heatmap', authenticate, async (req, res) => {
   const { playerId, mode, dateFrom, dateTo, result, groupId, format } = req.query;
   if (!playerId) return res.status(400).json({ error: 'playerId required' });
+  if (!(await canSeePlayer(req.player.id, playerId))) {
+    return res.status(403).json({ error: 'You do not share a group with this player' });
+  }
 
   const where = { playerId };
   if (result && ['CORNHOLE', 'BOARD', 'OFF'].includes(result)) {
@@ -251,6 +258,12 @@ router.get('/head-to-head', authenticate, async (req, res) => {
   if (player1Id === player2Id) {
     return res.status(400).json({ error: 'Players must be different' });
   }
+  if (
+    !(await canSeePlayer(req.player.id, player1Id)) ||
+    !(await canSeePlayer(req.player.id, player2Id))
+  ) {
+    return res.status(403).json({ error: 'You do not share a group with these players' });
+  }
 
   const games = await prisma.game.findMany({
     where: {
@@ -285,43 +298,53 @@ router.get('/head-to-head', authenticate, async (req, res) => {
 router.get('/leaderboard', authenticate, async (req, res) => {
   const minGames = Math.max(1, Number(req.query.minGames) || 1);
   const groupId = req.query.groupId || null;
+  if (!groupId) return res.status(400).json({ error: 'groupId required' });
+  const membership = await prisma.groupMember.findUnique({
+    where: { groupId_playerId: { groupId, playerId: req.player.id } },
+  });
+  if (!membership || membership.status !== 'MEMBER') {
+    return res.status(403).json({ error: 'Not a member of that group' });
+  }
 
-  const players = await prisma.player.findMany({ orderBy: { username: 'asc' } });
   const games = await prisma.game.findMany({
     where: {
       mode: 'COMPETITIVE',
       status: 'COMPLETED',
-      ...(groupId ? { groupId } : {}),
+      groupId,
     },
     include: {
-      players: true,
+      players: { include: { player: true } },
       result: true,
       rounds: { include: { bagThrows: true } },
     },
   });
 
+  // Rows are built from the group's games, so only players who actually
+  // appear in them are listed.
   const summary = {};
-  for (const p of players) {
-    summary[p.id] = {
-      id: p.id,
-      username: p.username,
-      games: 0,
-      wins: 0,
-      points: 0,
-      roundsThrown: 0,
-      throws: 0,
-      cornholes: 0,
-      boards: 0,
-      offs: 0,
-    };
+  function rowFor(gp) {
+    if (!summary[gp.playerId]) {
+      summary[gp.playerId] = {
+        id: gp.playerId,
+        username: gp.player?.username || 'Player',
+        games: 0,
+        wins: 0,
+        points: 0,
+        roundsThrown: 0,
+        throws: 0,
+        cornholes: 0,
+        boards: 0,
+        offs: 0,
+      };
+    }
+    return summary[gp.playerId];
   }
 
   for (const g of games) {
     const winning = g.result?.winningTeam;
     if (!winning) continue;
     for (const gp of g.players) {
-      const s = summary[gp.playerId];
-      if (!s) continue;
+      const s = rowFor(gp);
       s.games += 1;
       if (gp.team === winning) s.wins += 1;
     }

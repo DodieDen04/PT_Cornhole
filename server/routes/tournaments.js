@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../lib/prisma');
 const { authenticate } = require('../lib/auth');
+const { visiblePlayerIdSet } = require('../lib/visibility');
 
 const router = express.Router();
 
@@ -25,6 +26,10 @@ router.post('/', authenticate, async (req, res) => {
   const players = await prisma.player.findMany({ where: { id: { in: playerIds } } });
   if (players.length !== playerIds.length) {
     return res.status(400).json({ error: 'Unknown player(s)' });
+  }
+  const visible = await visiblePlayerIdSet(req.player.id);
+  if (playerIds.some((pid) => !visible.has(pid))) {
+    return res.status(400).json({ error: 'You can only add players from your groups' });
   }
 
   const pairs = roundRobinPairs(playerIds);

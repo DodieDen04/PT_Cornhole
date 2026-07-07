@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { PrimaryButton, SecondaryButton, GhostButton } from '../components/Button.jsx';
 import PTLogo from '../components/PTLogo.jsx';
+import { getPendingInvite } from '../lib/pendingInvite.js';
 
 export default function HomeScreen() {
   const { player } = useAuth();
@@ -12,6 +13,12 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [discarding, setDiscarding] = useState(false);
   const navigate = useNavigate();
+
+  // Finish an invite-link join that started before registration/login.
+  useEffect(() => {
+    const token = getPendingInvite();
+    if (token) navigate(`/join/${token}`, { replace: true });
+  }, [navigate]);
 
   const refreshResume = useCallback(async () => {
     try {

@@ -28,6 +28,7 @@ import InvitationsScreen from './screens/InvitationsScreen.jsx';
 import GroupsListScreen from './screens/GroupsListScreen.jsx';
 import GroupCreateScreen from './screens/GroupCreateScreen.jsx';
 import GroupDetailScreen from './screens/GroupDetailScreen.jsx';
+import JoinGroupScreen from './screens/JoinGroupScreen.jsx';
 
 function RequireAuth({ children }) {
   const { player, ready } = useAuth();
@@ -159,6 +160,7 @@ function AppRoutes() {
           }
         />
         <Route path="/spectate/:id" element={<SpectatorScreen />} />
+        <Route path="/join/:token" element={<JoinGroupScreen />} />
         <Route
           path="/tournaments"
           element={

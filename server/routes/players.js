@@ -2,11 +2,14 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { authenticate, requireAdmin, publicPlayer } = require('../lib/auth');
+const { visiblePlayerIdSet } = require('../lib/visibility');
 
 const router = express.Router();
 
 router.get('/', authenticate, async (req, res) => {
+  const visible = await visiblePlayerIdSet(req.player.id);
   const players = await prisma.player.findMany({
+    where: { id: { in: Array.from(visible) } },
     orderBy: { username: 'asc' },
     include: { _count: { select: { gamePlayers: true } } },
   });
@@ -19,7 +22,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 router.post('/guest', authenticate, async (req, res) => {
-  const { displayName } = req.body || {};
+  const { displayName, groupId } = req.body || {};
   if (!displayName || typeof displayName !== 'string') {
     return res.status(400).json({ error: 'Display name required' });
   }
@@ -31,8 +34,26 @@ router.post('/guest', authenticate, async (req, res) => {
   if (existing) return res.status(409).json({ error: 'Name already taken' });
 
   const player = await prisma.player.create({
-    data: { username: trimmed, pinHash: null, isGuest: true, isAdmin: false },
+    data: {
+      username: trimmed,
+      pinHash: null,
+      isGuest: true,
+      isAdmin: false,
+      createdById: req.player.id,
+    },
   });
+
+  // If created under an active group filter and the creator is that group's
+  // admin, put the guest straight into the group so other members see them.
+  if (groupId) {
+    const group = await prisma.group.findUnique({ where: { id: groupId } });
+    if (group && group.createdBy === req.player.id) {
+      await prisma.groupMember.create({
+        data: { groupId, playerId: player.id, status: 'MEMBER' },
+      });
+    }
+  }
+
   res.json({ player: publicPlayer(player) });
 });
 

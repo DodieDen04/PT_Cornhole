@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { PrimaryButton } from '../components/Button.jsx';
+import { getPendingInvite } from '../lib/pendingInvite.js';
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState('');
@@ -41,6 +42,11 @@ export default function RegisterScreen() {
       {firstRun && (
         <p className="text-sm text-ink/80 mb-6 max-w-sm text-center">
           You will be the first player and become admin.
+        </p>
+      )}
+      {getPendingInvite() && (
+        <p className="text-sm text-ink/80 max-w-sm text-center">
+          After registering you'll join your group automatically.
         </p>
       )}
       <form onSubmit={onSubmit} className="w-full max-w-sm flex flex-col gap-4 mt-4">

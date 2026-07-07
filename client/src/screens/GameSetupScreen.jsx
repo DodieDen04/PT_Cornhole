@@ -152,7 +152,7 @@ export default function GameSetupScreen() {
     try {
       const { player: guest } = await api('/api/players/guest', {
         method: 'POST',
-        body: { displayName: name },
+        body: { displayName: name, groupId: activeGroupId },
       });
       setPlayers((ps) => [...ps, guest].sort((a, b) => a.username.localeCompare(b.username)));
       // Auto-select the new guest as opponent

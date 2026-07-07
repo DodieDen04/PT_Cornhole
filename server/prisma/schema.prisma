@@ -55,6 +55,7 @@ model Player {
   pinHash     String?
   isAdmin     Boolean  @default(false)
   isGuest     Boolean  @default(false)
+  createdById String?
   createdAt   DateTime @default(now())
 
   gamePlayers      GamePlayer[]
@@ -67,6 +68,11 @@ model Player {
   createdGroups    Group[]            @relation("GroupCreator")
   groupMemberships GroupMember[]
   createdGames     Game[]             @relation("GameCreator")
+  createdBy        Player?            @relation("PlayerCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdPlayers   Player[]           @relation("PlayerCreator")
+  inviteLinks      GroupInvite[]
+
+  @@index([createdById])
 }
 
 model Game {
@@ -234,11 +240,29 @@ model Group {
   createdBy String
   createdAt DateTime @default(now())
 
-  creator Player        @relation("GroupCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  members GroupMember[]
-  games   Game[]
+  creator     Player        @relation("GroupCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  games       Game[]
+  inviteLinks GroupInvite[]
 
   @@index([createdBy])
+}
+
+model GroupInvite {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  groupId   String
+  createdBy String
+  expiresAt DateTime
+  maxUses   Int?
+  useCount  Int      @default(0)
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator Player @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
 }
 
 model GroupMember {

@@ -1,8 +1,33 @@
 const express = require('express');
+const crypto = require('crypto');
 const prisma = require('../lib/prisma');
 const { authenticate } = require('../lib/auth');
 
 const router = express.Router();
+
+async function requireGroupAdmin(req, res) {
+  const group = await prisma.group.findUnique({ where: { id: req.params.id } });
+  if (!group) {
+    res.status(404).json({ error: 'Not found' });
+    return null;
+  }
+  if (group.createdBy !== req.player.id) {
+    res.status(403).json({ error: 'Admin only' });
+    return null;
+  }
+  return group;
+}
+
+function publicLink(link) {
+  return {
+    id: link.id,
+    token: link.token,
+    expiresAt: link.expiresAt,
+    maxUses: link.maxUses,
+    useCount: link.useCount,
+    createdAt: link.createdAt,
+  };
+}
 
 function publicMember(gm) {
   return {
@@ -220,6 +245,95 @@ router.post('/:id/leave', authenticate, async (req, res) => {
   const membership = await getMembership(group.id, req.player.id);
   if (!membership) return res.status(404).json({ error: 'Not a member' });
   await prisma.groupMember.delete({ where: { id: membership.id } });
+  res.json({ ok: true });
+});
+
+router.post('/:id/invite-username', authenticate, async (req, res) => {
+  const group = await requireGroupAdmin(req, res);
+  if (!group) return;
+  const username = (req.body?.username || '').trim();
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  const target = await prisma.player.findUnique({ where: { username } });
+  if (!target || target.isGuest || !target.pinHash) {
+    return res.status(404).json({ error: 'No registered user with that exact name' });
+  }
+  if (target.id === req.player.id) {
+    return res.status(400).json({ error: 'You are already in the group' });
+  }
+  const existing = await getMembership(group.id, target.id);
+  if (existing) {
+    return res.status(409).json({
+      error: existing.status === 'MEMBER' ? 'Already a member' : 'Already invited',
+    });
+  }
+  await prisma.groupMember.create({
+    data: { groupId: group.id, playerId: target.id, status: 'INVITED' },
+  });
+  res.json({ invited: 1, username: target.username });
+});
+
+router.post('/:id/links', authenticate, async (req, res) => {
+  const group = await requireGroupAdmin(req, res);
+  if (!group) return;
+  const days = Math.min(90, Math.max(1, Number(req.body?.expiresInDays) || 7));
+  let maxUses = null;
+  if (req.body?.maxUses != null && req.body.maxUses !== '') {
+    maxUses = Math.min(500, Math.max(1, Number(req.body.maxUses) || 1));
+  }
+  const link = await prisma.groupInvite.create({
+    data: {
+      token: crypto.randomBytes(18).toString('base64url'),
+      groupId: group.id,
+      createdBy: req.player.id,
+      expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
+      maxUses,
+    },
+  });
+  res.json({ link: publicLink(link) });
+});
+
+router.get('/:id/links', authenticate, async (req, res) => {
+  const group = await requireGroupAdmin(req, res);
+  if (!group) return;
+  const links = await prisma.groupInvite.findMany({
+    where: {
+      groupId: group.id,
+      revoked: false,
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  const usable = links.filter((l) => l.maxUses == null || l.useCount < l.maxUses);
+  res.json({ links: usable.map(publicLink) });
+});
+
+router.delete('/:id/links/:linkId', authenticate, async (req, res) => {
+  const group = await requireGroupAdmin(req, res);
+  if (!group) return;
+  const link = await prisma.groupInvite.findUnique({ where: { id: req.params.linkId } });
+  if (!link || link.groupId !== group.id) return res.status(404).json({ error: 'Not found' });
+  await prisma.groupInvite.update({ where: { id: link.id }, data: { revoked: true } });
+  res.json({ ok: true });
+});
+
+router.post('/:id/transfer-admin', authenticate, async (req, res) => {
+  const group = await requireGroupAdmin(req, res);
+  if (!group) return;
+  const { playerId } = req.body || {};
+  if (!playerId) return res.status(400).json({ error: 'playerId required' });
+  if (playerId === req.player.id) {
+    return res.status(400).json({ error: 'You are already the admin' });
+  }
+  const membership = await getMembership(group.id, playerId);
+  if (!membership || membership.status !== 'MEMBER') {
+    return res.status(400).json({ error: 'New admin must be a member of the group' });
+  }
+  const target = await prisma.player.findUnique({ where: { id: playerId } });
+  if (!target || target.isGuest || !target.pinHash) {
+    return res.status(400).json({ error: 'New admin must be a registered user' });
+  }
+  await prisma.group.update({ where: { id: group.id }, data: { createdBy: playerId } });
   res.json({ ok: true });
 });
 

@@ -2,6 +2,7 @@ const express = require('express');
 const prisma = require('../lib/prisma');
 const { authenticate } = require('../lib/auth');
 const { getGameTotals } = require('../lib/scoring');
+const { visiblePlayerIdSet } = require('../lib/visibility');
 
 const router = express.Router();
 
@@ -76,6 +77,15 @@ router.post('/', authenticate, async (req, res) => {
 
   const groupCheck = await validateGroupId(body.groupId, req.player.id);
   if (!groupCheck.ok) return res.status(400).json({ error: groupCheck.error });
+
+  if (Array.isArray(body.players)) {
+    const visible = await visiblePlayerIdSet(req.player.id);
+    for (const p of body.players) {
+      if (!visible.has(p.playerId)) {
+        return res.status(400).json({ error: 'You can only add players from your groups' });
+      }
+    }
+  }
 
   if (mode === 'COMPETITIVE') {
     const { players, team1Colour, team2Colour, targetScore } = body;

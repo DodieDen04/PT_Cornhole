@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import Breadcrumb from '../components/Breadcrumb.jsx';
-import GroupFilter from '../components/GroupFilter.jsx';
+import { SecondaryButton } from '../components/Button.jsx';
 
 const COLUMNS = [
   { key: 'games', label: 'MP', title: 'Matches played' },
@@ -23,17 +23,28 @@ const COLUMNS = [
 export default function LeaderboardScreen() {
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
+  const [groups, setGroups] = useState(null);
   const [groupId, setGroupId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sortKey, setSortKey] = useState('winPct');
   const [sortDir, setSortDir] = useState('desc');
 
   useEffect(() => {
+    api('/api/groups')
+      .then((d) => {
+        setGroups(d.groups);
+        if (d.groups.length === 1) setGroupId(d.groups[0].id);
+      })
+      .catch(() => setGroups([]));
+  }, []);
+
+  useEffect(() => {
+    if (!groupId) {
+      setRows([]);
+      return;
+    }
     setLoading(true);
-    const params = new URLSearchParams();
-    if (groupId) params.set('groupId', groupId);
-    const qs = params.toString() ? `?${params.toString()}` : '';
-    api(`/api/stats/leaderboard${qs}`)
+    api(`/api/stats/leaderboard?groupId=${groupId}`)
       .then((d) => setRows(d.leaderboard))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
@@ -70,12 +81,42 @@ export default function LeaderboardScreen() {
         <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
       </header>
 
-      <GroupFilter value={groupId} onChange={setGroupId} />
+      {groups === null ? (
+        <p className="text-ink/70 text-sm">Loading...</p>
+      ) : groups.length === 0 ? (
+        <div>
+          <p className="text-ink/70 text-sm mb-3">
+            Leaderboards are per group. Join or create a group first.
+          </p>
+          <SecondaryButton onClick={() => navigate('/groups')}>Go to Groups</SecondaryButton>
+        </div>
+      ) : (
+        <div className="mb-4">
+          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+            {groups.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => setGroupId(g.id)}
+                className={
+                  'shrink-0 min-h-[36px] px-3 rounded-full text-xs font-semibold whitespace-nowrap transition ' +
+                  (groupId === g.id
+                    ? 'bg-ink text-page'
+                    : 'bg-surface text-ink border border-ink/20')
+                }
+              >
+                {g.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {loading ? (
+      {groups === null || groups.length === 0 ? null : !groupId ? (
+        <p className="text-ink/70 text-sm">Pick a group to see its leaderboard.</p>
+      ) : loading ? (
         <p className="text-ink/70 text-sm">Loading...</p>
       ) : sorted.length === 0 ? (
-        <p className="text-ink/70 text-sm">No completed games yet.</p>
+        <p className="text-ink/70 text-sm">No completed games in this group yet.</p>
       ) : (
         <>
           <p className="text-xs text-ink/60 mb-2">

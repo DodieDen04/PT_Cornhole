@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import QRCode from 'qrcode';
 import { api } from '../api.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { PrimaryButton, SecondaryButton, DangerButton, GhostButton } from '../components/Button.jsx';
@@ -197,7 +198,23 @@ export default function GroupDetailScreen() {
           <SecondaryButton onClick={() => setPickerMode('guests')}>
             Add guest players
           </SecondaryButton>
+          <InviteByUsername groupId={id} onDone={flash} />
         </section>
+      )}
+
+      {isAdmin && <InviteLinksSection groupId={id} />}
+
+      {isAdmin && (
+        <TransferAdminSection
+          groupId={id}
+          members={members}
+          meId={player.id}
+          busy={busy}
+          onDone={(text) => {
+            flash(text);
+            load();
+          }}
+        />
       )}
 
       {isAdmin ? (
@@ -229,6 +246,243 @@ export default function GroupDetailScreen() {
         />
       )}
     </div>
+  );
+}
+
+function InviteByUsername({ groupId, onDone }) {
+  const [username, setUsername] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function invite() {
+    const name = username.trim();
+    if (!name) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await api(`/api/groups/${groupId}/invite-username`, {
+        method: 'POST',
+        body: { username: name },
+      });
+      setUsername('');
+      onDone(`Invited ${res.username}`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-xs text-ink/60 mb-1">
+        Know someone's exact username? Invite them directly:
+      </p>
+      <div className="flex gap-2">
+        <input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Exact username"
+          maxLength={30}
+          className="flex-1 min-h-[40px] px-3 rounded-lg bg-surface border border-ink/20 text-ink outline-none text-sm"
+        />
+        <button
+          onClick={invite}
+          disabled={busy || !username.trim()}
+          className="min-h-[40px] px-3 rounded-lg bg-ink text-page font-semibold text-sm disabled:opacity-50"
+        >
+          {busy ? '...' : 'Invite'}
+        </button>
+      </div>
+      {error && <p className="text-xs text-[#EF4444] mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function InviteLinksSection({ groupId }) {
+  const [links, setLinks] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [qr, setQr] = useState(null); // { linkId, dataUrl }
+
+  const loadLinks = useCallback(() => {
+    api(`/api/groups/${groupId}/links`)
+      .then((d) => setLinks(d.links))
+      .catch(() => {});
+  }, [groupId]);
+
+  useEffect(() => {
+    loadLinks();
+  }, [loadLinks]);
+
+  function urlFor(link) {
+    return `${window.location.origin}/join/${link.token}`;
+  }
+
+  async function createLink() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/api/groups/${groupId}/links`, { method: 'POST', body: {} });
+      loadLinks();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function revoke(link) {
+    if (!window.confirm('Withdraw this invite link? Anyone holding it can no longer join.')) return;
+    setBusy(true);
+    try {
+      await api(`/api/groups/${groupId}/links/${link.id}`, { method: 'DELETE' });
+      if (qr?.linkId === link.id) setQr(null);
+      loadLinks();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copy(link) {
+    try {
+      await navigator.clipboard.writeText(urlFor(link));
+      setCopiedId(link.id);
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch {
+      window.prompt('Copy this link:', urlFor(link));
+    }
+  }
+
+  async function toggleQr(link) {
+    if (qr?.linkId === link.id) {
+      setQr(null);
+      return;
+    }
+    const dataUrl = await QRCode.toDataURL(urlFor(link), { width: 480, margin: 1 });
+    setQr({ linkId: link.id, dataUrl });
+  }
+
+  return (
+    <section className="mb-5">
+      <p className="text-xs uppercase tracking-wider text-ink/60 mb-2">Invite links</p>
+      <p className="text-xs text-ink/60 mb-2">
+        Anyone with the link can join this group, even without an account yet. Links last 7 days.
+      </p>
+      {error && <p className="text-xs text-[#EF4444] mb-2">{error}</p>}
+
+      {links.length > 0 && (
+        <ul className="flex flex-col gap-1.5 mb-2">
+          {links.map((link) => (
+            <li key={link.id} className="p-3 rounded-xl bg-surface border border-ink/15">
+              <div className="flex items-center gap-2">
+                <span className="flex-1 text-xs text-ink/70 truncate">{urlFor(link)}</span>
+                <button
+                  disabled={busy}
+                  onClick={() => revoke(link)}
+                  aria-label="Withdraw link"
+                  className="w-7 h-7 rounded-lg bg-[#7F1D1D]/60 text-ink text-xs shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => copy(link)}
+                  className="flex-1 min-h-[36px] rounded-lg bg-ink text-page text-xs font-semibold"
+                >
+                  {copiedId === link.id ? 'Copied!' : 'Copy link'}
+                </button>
+                <button
+                  onClick={() => toggleQr(link)}
+                  className="flex-1 min-h-[36px] rounded-lg bg-surface-2 text-ink border border-ink/20 text-xs font-semibold"
+                >
+                  {qr?.linkId === link.id ? 'Hide QR' : 'Show QR'}
+                </button>
+              </div>
+              <p className="text-[10px] text-ink/50 mt-1.5">
+                Used {link.useCount}
+                {link.maxUses ? ` of ${link.maxUses}` : ' times'} &middot; expires{' '}
+                {new Date(link.expiresAt).toLocaleDateString()}
+              </p>
+              {qr?.linkId === link.id && (
+                <div className="mt-2 p-2 rounded-lg bg-white">
+                  <img src={qr.dataUrl} alt="Invite QR code" className="w-full max-w-[240px] mx-auto" />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <SecondaryButton className="w-full" disabled={busy} onClick={createLink}>
+        {busy ? '...' : 'Create invite link'}
+      </SecondaryButton>
+    </section>
+  );
+}
+
+function TransferAdminSection({ groupId, members, meId, busy, onDone }) {
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [transferring, setTransferring] = useState(false);
+
+  const eligible = members.filter((m) => m.playerId !== meId && !m.player.isGuest);
+
+  async function transfer(m) {
+    if (
+      !window.confirm(
+        `Make ${m.player.username} the group admin? You will become a normal member.`,
+      )
+    ) {
+      return;
+    }
+    setTransferring(true);
+    setError(null);
+    try {
+      await api(`/api/groups/${groupId}/transfer-admin`, {
+        method: 'POST',
+        body: { playerId: m.playerId },
+      });
+      setOpen(false);
+      onDone(`${m.player.username} is now admin`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setTransferring(false);
+    }
+  }
+
+  if (eligible.length === 0) return null;
+
+  return (
+    <section className="mb-5">
+      <SecondaryButton className="w-full" disabled={busy} onClick={() => setOpen((o) => !o)}>
+        {open ? 'Cancel transfer' : 'Transfer admin'}
+      </SecondaryButton>
+      {open && (
+        <div className="mt-2">
+          <p className="text-xs text-ink/60 mb-2">Pick the new admin:</p>
+          {error && <p className="text-xs text-[#EF4444] mb-2">{error}</p>}
+          <ul className="flex flex-col gap-1.5">
+            {eligible.map((m) => (
+              <li key={m.id}>
+                <button
+                  disabled={transferring}
+                  onClick={() => transfer(m)}
+                  className="w-full p-2.5 rounded-xl bg-surface border border-ink/20 text-left font-medium disabled:opacity-50"
+                >
+                  {m.player.username}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 
