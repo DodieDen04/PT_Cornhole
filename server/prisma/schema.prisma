@@ -168,6 +168,7 @@ model BagThrow {
   round       Round?       @relation(fields: [roundId], references: [id], onDelete: Cascade)
   practiceSet PracticeSet? @relation(fields: [practiceSetId], references: [id], onDelete: Cascade)
 
+  @@unique([roundId, throwOrder])
   @@index([gameId])
   @@index([playerId])
   @@index([roundId])

@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import Board from '../components/Board.jsx';
 import CornholeBurst from '../components/CornholeBurst.jsx';
 import PTLogo from '../components/PTLogo.jsx';
@@ -41,12 +42,15 @@ function nextThrower(game, round) {
 export default function ScoringScreen() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { player: me } = useAuth();
   const [game, setGame] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [cornholeBurst, setCornholeBurst] = useState(null);
   const [showEndPopup, setShowEndPopup] = useState(false);
   const [showQuit, setShowQuit] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [remoteHint, setRemoteHint] = useState(null);
 
   function celebrateCornhole(colourHex) {
     setCornholeBurst({ id: Date.now(), color: colourHex });
@@ -59,17 +63,28 @@ export default function ScoringScreen() {
     return () => clearTimeout(t);
   }, [cornholeBurst]);
 
+  useEffect(() => {
+    if (!remoteHint) return;
+    const t = setTimeout(() => setRemoteHint(null), 2000);
+    return () => clearTimeout(t);
+  }, [remoteHint]);
+
   const load = useCallback(async () => {
     try {
       const { game } = await api(`/api/games/${id}`);
       setGame(game);
       if (game.status === 'COMPLETED') {
         navigate(`/game/${id}/over`, { replace: true });
+        return;
+      }
+      const isParticipant = game.players.some((gp) => gp.playerId === me.id);
+      if (!isParticipant && game.createdById !== me.id) {
+        navigate(`/spectate/${id}`, { replace: true });
       }
     } catch (err) {
       setError(err.message);
     }
-  }, [id, navigate]);
+  }, [id, navigate, me.id]);
 
   useEffect(() => {
     load();
@@ -79,6 +94,102 @@ export default function ScoringScreen() {
     window.addEventListener('pt-sync-flushed', onFlushed);
     return () => window.removeEventListener('pt-sync-flushed', onFlushed);
   }, [load]);
+
+  // Live sync: other scorers' phones and this one share the game via the
+  // spectate WebSocket. iOS kills sockets when the PWA backgrounds, so
+  // reconnect with backoff and refetch on reconnect and on foreground.
+  const wsRef = useRef(null);
+  useEffect(() => {
+    let closed = false;
+    let retries = 0;
+    let retryTimer = null;
+
+    function connect() {
+      if (closed) return;
+      const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${proto}://${window.location.host}/ws/spectate?gameId=${id}`);
+      wsRef.current = ws;
+      ws.onopen = () => {
+        setWsConnected(true);
+        if (retries > 0) load();
+        retries = 0;
+      };
+      ws.onclose = () => {
+        setWsConnected(false);
+        if (closed) return;
+        const delay = [1000, 2000, 5000][Math.min(retries, 2)];
+        retries += 1;
+        retryTimer = setTimeout(connect, delay);
+      };
+      ws.onerror = () => {};
+      ws.onmessage = (e) => {
+        let msg;
+        try {
+          msg = JSON.parse(e.data);
+        } catch {
+          return;
+        }
+        if (msg.type !== 'update') return;
+        const fromOther = msg.by && msg.by.id !== me.id;
+        if (msg.game) {
+          setGame(msg.game);
+          setShowEndPopup(false);
+          if (msg.winningTeam) {
+            navigate(`/game/${id}/over`, { replace: true });
+          } else if (fromOther) {
+            const maxRound = (msg.game.rounds || []).reduce(
+              (m, r) => Math.max(m, r.roundNumber),
+              1,
+            );
+            setRemoteHint({
+              id: Date.now(),
+              text: `Round ${maxRound - 1} confirmed by ${msg.by.username}`,
+            });
+          }
+        } else if (msg.round) {
+          setGame((prev) => mergeRound(prev, msg.round, msg.totals));
+          if (fromOther) {
+            setRemoteHint({ id: Date.now(), text: `${msg.by.username} scored` });
+          }
+        }
+      };
+    }
+
+    connect();
+
+    function onVisible() {
+      if (document.visibilityState !== 'visible') return;
+      load();
+      const ws = wsRef.current;
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        clearTimeout(retryTimer);
+        connect();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      closed = true;
+      clearTimeout(retryTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+      wsRef.current?.close();
+    };
+  }, [id, me.id, load, navigate]);
+
+  // Another phone may have completed the round or filled it a beat before
+  // this one acted; refresh instead of surfacing a raw error.
+  const handleScoreError = useCallback(
+    (err) => {
+      if (err.queued) return;
+      const msg = err.message || '';
+      if (/no longer active|already completed|already has 8|clashed/i.test(msg)) {
+        load();
+        return;
+      }
+      setError(msg);
+    },
+    [load],
+  );
 
   const round = useMemo(() => (game ? activeRound(game) : null), [game]);
   const thrower = useMemo(() => (game && round ? nextThrower(game, round) : null), [game, round]);
@@ -122,7 +233,7 @@ export default function ScoringScreen() {
       const last = updated.bagThrows[updated.bagThrows.length - 1];
       if (last?.result === 'CORNHOLE') celebrateCornhole(throwerHex);
     } catch (err) {
-      if (!err.queued) setError(err.message);
+      handleScoreError(err);
     } finally {
       setBusy(false);
     }
@@ -144,7 +255,7 @@ export default function ScoringScreen() {
       const moved = updated.bagThrows.find((t) => t.id === bagId);
       if (moved?.result === 'CORNHOLE' && !wasCornhole) celebrateCornhole(movedHex);
     } catch (err) {
-      if (!err.queued) setError(err.message);
+      handleScoreError(err);
     } finally {
       setBusy(false);
     }
@@ -158,7 +269,7 @@ export default function ScoringScreen() {
       const { round: updated, totals } = await api(`/api/throws/${last.id}`, { method: 'DELETE' });
       setGame((prev) => mergeRound(prev, updated, totals));
     } catch (err) {
-      if (!err.queued) setError(err.message);
+      handleScoreError(err);
     } finally {
       setBusy(false);
     }
@@ -177,7 +288,7 @@ export default function ScoringScreen() {
         navigate(`/game/${id}/over`, { replace: true });
       }
     } catch (err) {
-      if (!err.queued) setError(err.message);
+      handleScoreError(err);
     } finally {
       setBusy(false);
     }
@@ -223,10 +334,26 @@ export default function ScoringScreen() {
     <div className="h-full flex flex-col px-3 py-2 max-w-md lg:max-w-4xl mx-auto">
       <header className="flex items-center justify-between mb-2">
         <PTLogo className="h-7" />
-        <span className="text-sm uppercase tracking-wider text-ink/70">
+        <span className="flex items-center gap-2 text-sm uppercase tracking-wider text-ink/70">
+          <span
+            className={
+              'w-2 h-2 rounded-full ' + (wsConnected ? 'bg-[#22C55E]' : 'bg-ink/30')
+            }
+            title={wsConnected ? 'Live sync on' : 'Reconnecting...'}
+          />
           Round {round.roundNumber}
         </span>
       </header>
+
+      {remoteHint && (
+        <div
+          key={remoteHint.id}
+          className="fixed top-2 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-ink text-page text-xs font-semibold shadow-lg"
+          style={{ marginTop: 'env(safe-area-inset-top)' }}
+        >
+          {remoteHint.text}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2 mb-2">
         <TeamCard

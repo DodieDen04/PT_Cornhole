@@ -43,52 +43,62 @@ router.put('/:id/complete', authenticate, async (req, res) => {
   const winningTeam =
     team1Total >= target ? 1 : team2Total >= target ? 2 : null;
 
-  if (winningTeam) {
-    await prisma.game.update({
-      where: { id: round.gameId },
-      data: {
-        status: 'COMPLETED',
-        completedAt: new Date(),
-        startingTeam: refreshed.scoringTeam || round.startingTeam,
-      },
-    });
-    await prisma.gameResult.create({
-      data: {
-        gameId: round.gameId,
-        winningTeam,
-        team1Score: team1Total,
-        team2Score: team2Total,
-      },
-    });
-    const tMatch = await prisma.tournamentMatch.findFirst({ where: { gameId: round.gameId } });
-    if (tMatch) {
-      const winnerId = winningTeam === 1 ? tMatch.player1Id : tMatch.player2Id;
-      await prisma.tournamentMatch.update({ where: { id: tMatch.id }, data: { winnerId } });
-      const remaining = await prisma.tournamentMatch.count({
-        where: { tournamentId: tMatch.tournamentId, winnerId: null },
+  // Two phones can race to complete the same round (shared scoring). Both
+  // pass the active-round guard, then the loser trips a unique constraint
+  // (next Round's roundNumber, or GameResult's gameId). Reject it cleanly.
+  try {
+    if (winningTeam) {
+      await prisma.game.update({
+        where: { id: round.gameId },
+        data: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+          startingTeam: refreshed.scoringTeam || round.startingTeam,
+        },
       });
-      if (remaining === 0) {
-        await prisma.tournament.update({
-          where: { id: tMatch.tournamentId },
-          data: { status: 'COMPLETED', completedAt: new Date() },
+      await prisma.gameResult.create({
+        data: {
+          gameId: round.gameId,
+          winningTeam,
+          team1Score: team1Total,
+          team2Score: team2Total,
+        },
+      });
+      const tMatch = await prisma.tournamentMatch.findFirst({ where: { gameId: round.gameId } });
+      if (tMatch) {
+        const winnerId = winningTeam === 1 ? tMatch.player1Id : tMatch.player2Id;
+        await prisma.tournamentMatch.update({ where: { id: tMatch.id }, data: { winnerId } });
+        const remaining = await prisma.tournamentMatch.count({
+          where: { tournamentId: tMatch.tournamentId, winnerId: null },
         });
+        if (remaining === 0) {
+          await prisma.tournament.update({
+            where: { id: tMatch.tournamentId },
+            data: { status: 'COMPLETED', completedAt: new Date() },
+          });
+        }
       }
+    } else {
+      const newStartingTeam = refreshed.scoringTeam || round.startingTeam;
+      const newPair = nextThrowingPair(round.throwingPair, round.game.players);
+      await prisma.game.update({
+        where: { id: round.gameId },
+        data: { startingTeam: newStartingTeam },
+      });
+      await prisma.round.create({
+        data: {
+          gameId: round.gameId,
+          roundNumber: round.roundNumber + 1,
+          startingTeam: newStartingTeam,
+          throwingPair: newPair,
+        },
+      });
     }
-  } else {
-    const newStartingTeam = refreshed.scoringTeam || round.startingTeam;
-    const newPair = nextThrowingPair(round.throwingPair, round.game.players);
-    await prisma.game.update({
-      where: { id: round.gameId },
-      data: { startingTeam: newStartingTeam },
-    });
-    await prisma.round.create({
-      data: {
-        gameId: round.gameId,
-        roundNumber: round.roundNumber + 1,
-        startingTeam: newStartingTeam,
-        throwingPair: newPair,
-      },
-    });
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Round already completed' });
+    }
+    throw err;
   }
 
   const game = await prisma.game.findUnique({
@@ -103,7 +113,11 @@ router.put('/:id/complete', authenticate, async (req, res) => {
     },
   });
   const finalTotals = await getGameTotals(round.gameId);
-  broadcastGameUpdate(round.gameId, { game: { ...game, ...finalTotals }, winningTeam });
+  broadcastGameUpdate(round.gameId, {
+    game: { ...game, ...finalTotals },
+    winningTeam,
+    by: { id: req.player.id, username: req.player.username },
+  });
   res.json({
     game: { ...game, ...finalTotals },
     completedRound: refreshed,

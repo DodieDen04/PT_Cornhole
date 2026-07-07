@@ -16,38 +16,56 @@ router.post('/', authenticate, async (req, res) => {
     return res.status(400).json({ error: 'roundId required (practice uses POST /games/:id/sets)' });
   }
 
-  const round = await prisma.round.findUnique({
-    where: { id: roundId },
-    include: { bagThrows: true, game: { include: { rounds: true } } },
-  });
-  if (!round || round.gameId !== gameId) {
-    return res.status(400).json({ error: 'Round/game mismatch' });
-  }
-  if (round.game.status !== 'IN_PROGRESS') {
-    return res.status(400).json({ error: 'Game is not in progress' });
-  }
-  const maxRoundNumber = round.game.rounds.reduce((m, r) => Math.max(m, r.roundNumber), 0);
-  if (round.roundNumber !== maxRoundNumber) {
-    return res.status(400).json({ error: 'Round is no longer active' });
-  }
-  if (round.bagThrows.length >= 8) {
-    return res.status(400).json({ error: 'Round already has 8 throws' });
-  }
-
   const { result, points } = classifyThrow(boardX, boardY);
-  const throwOrder = round.bagThrows.length + 1;
 
-  await prisma.bagThrow.create({
-    data: { gameId, roundId, playerId, throwOrder, boardX, boardY, result, points },
-  });
-  const updatedRound = await recalcRound(roundId);
+  // Two phones can score the same round at once (shared scoring). throwOrder
+  // is read-then-write, so a clash hits the [roundId, throwOrder] unique
+  // constraint; re-read and retry, re-checking the guards each attempt.
+  let created = false;
+  for (let attempt = 0; attempt < 3 && !created; attempt++) {
+    const round = await prisma.round.findUnique({
+      where: { id: roundId },
+      include: { bagThrows: true, game: { include: { rounds: true } } },
+    });
+    if (!round || round.gameId !== gameId) {
+      return res.status(400).json({ error: 'Round/game mismatch' });
+    }
+    if (round.game.status !== 'IN_PROGRESS') {
+      return res.status(400).json({ error: 'Game is not in progress' });
+    }
+    const maxRoundNumber = round.game.rounds.reduce((m, r) => Math.max(m, r.roundNumber), 0);
+    if (round.roundNumber !== maxRoundNumber) {
+      return res.status(400).json({ error: 'Round is no longer active' });
+    }
+    if (round.bagThrows.length >= 8) {
+      return res.status(400).json({ error: 'Round already has 8 throws' });
+    }
+    const throwOrder = round.bagThrows.length + 1;
+    try {
+      await prisma.bagThrow.create({
+        data: { gameId, roundId, playerId, throwOrder, boardX, boardY, result, points },
+      });
+      created = true;
+    } catch (err) {
+      if (err.code !== 'P2002') throw err;
+    }
+  }
+  if (!created) {
+    return res.status(409).json({ error: 'Throw clashed with another scorer, try again' });
+  }
+
+  await recalcRound(roundId);
   const totals = await getGameTotals(gameId);
 
   const refreshed = await prisma.round.findUnique({
     where: { id: roundId },
     include: { bagThrows: { orderBy: { throwOrder: 'asc' } } },
   });
-  broadcastGameUpdate(gameId, { round: refreshed, totals });
+  broadcastGameUpdate(gameId, {
+    round: refreshed,
+    totals,
+    by: { id: req.player.id, username: req.player.username },
+  });
   res.json({ round: refreshed, totals });
 });
 
@@ -75,7 +93,11 @@ router.put('/:id', authenticate, async (req, res) => {
       include: { bagThrows: { orderBy: { throwOrder: 'asc' } } },
     });
     const totals = await getGameTotals(existing.gameId);
-    broadcastGameUpdate(existing.gameId, { round: refreshed, totals });
+    broadcastGameUpdate(existing.gameId, {
+      round: refreshed,
+      totals,
+      by: { id: req.player.id, username: req.player.username },
+    });
     return res.json({ round: refreshed, totals });
   }
   const updated = await prisma.bagThrow.findUnique({ where: { id: req.params.id } });
@@ -111,7 +133,11 @@ router.delete('/:id', authenticate, async (req, res) => {
       include: { bagThrows: { orderBy: { throwOrder: 'asc' } } },
     });
     const totals = await getGameTotals(existing.gameId);
-    broadcastGameUpdate(existing.gameId, { round: refreshed, totals });
+    broadcastGameUpdate(existing.gameId, {
+      round: refreshed,
+      totals,
+      by: { id: req.player.id, username: req.player.username },
+    });
     return res.json({ round: refreshed, totals });
   }
 
